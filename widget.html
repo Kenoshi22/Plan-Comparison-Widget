@@ -47,6 +47,23 @@
                 </div>
             </div>
 
+            <!-- Enter Premiums Section -->
+            <div class="section enter-premiums" id="enterPremiumsSection" style="display: none;">
+                <h2>Enter Plan Premiums</h2>
+                <p class="section-description">Enter the monthly premium for each selected plan.</p>
+                <div class="scenario-container">
+                    <div class="premiums-grid" id="premiumsGrid">
+                        <!-- Premium inputs will be added here -->
+                    </div>
+                    <div class="premium-actions">
+                        <button id="savePremiumsBtn" class="btn btn-primary">
+                            <span class="btn-icon">💾</span>
+                            Save Premiums & Calculate
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Medical Bills Section -->
             <div class="section medical-bills">
                 <h2>Example Medical Bills</h2>
@@ -61,6 +78,18 @@
                             <div class="form-group">
                                 <label for="billAmount">Bill Amount ($)</label>
                                 <input type="number" id="billAmount" min="0" step="100" placeholder="10000">
+                            </div>
+                            <div class="form-group">
+                                <label for="billBenefitType">Benefit Type</label>
+                                <select id="billBenefitType" class="bill-benefit-type">
+                                    <option value="Emergency Room">Emergency Room</option>
+                                    <option value="Inpatient Visits">Inpatient Visits</option>
+                                    <option value="Outpatient Visits">Outpatient Visits</option>
+                                    <option value="Surgery/Procedures">Ambulatory Procedures</option>
+                                    <option value="Advanced Imaging">Advanced Imaging</option>
+                                    <option value="Basic Imaging">Basic Imaging</option>
+                                    <option value="Lab Tests">Lab Tests</option>
+                                </select>
                             </div>
                             <button id="addBillBtn" class="btn btn-secondary">
                                 <span class="btn-icon">+</span>
@@ -196,32 +225,15 @@
                         <div class="comparison-categories">
                             <div class="category-section">
                                 <h3>Basic Medical</h3>
-                                <div class="category-items">
-                                    <div class="category-item">Lab Tests</div>
-                                    <div class="category-item">Primary Care</div>
-                                    <div class="category-item">Specialist Care</div>
-                                    <div class="category-item">Urgent Care</div>
-                                    <div class="category-item">Virtual Benefits</div>
-                                </div>
+                                <p class="category-description">Includes lab tests, primary care visits, specialist visits, urgent care, and virtual visits.</p>
                             </div>
                             <div class="category-section">
                                 <h3>Major Medical</h3>
-                                <div class="category-items">
-                                    <div class="category-item">Advanced Imaging</div>
-                                    <div class="category-item">Emergency Room</div>
-                                    <div class="category-item">Physician Charges</div>
-                                    <div class="category-item">Outpatient/Inpatient</div>
-                                    <div class="category-item">Ambulatory Surgery</div>
-                                </div>
+                                <p class="category-description">Covers advanced imaging, emergency room visits, physician charges, outpatient/inpatient services, and ambulatory procedures.</p>
                             </div>
                             <div class="category-section">
                                 <h3>Drug Costs</h3>
-                                <div class="category-items">
-                                    <div class="category-item">Tier 1-2 Drugs</div>
-                                    <div class="category-item">Tier 3-4 Drugs</div>
-                                    <div class="category-item">Tier 5-7 Drugs</div>
-                                    <div class="category-item">Specialty Drugs</div>
-                                </div>
+                                <p class="category-description">Prescription drug costs across all tiers including generic, preferred brand, non-preferred brand, and specialty drugs.</p>
                             </div>
                         </div>
                         
@@ -244,9 +256,21 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Medical Bills Breakdown -->
+                        <div class="medical-bills-breakdown" id="medicalBillsBreakdown" style="display: none;">
+                            <h3>Medical Bills Breakdown</h3>
+                            <div class="bills-breakdown-container" id="billsBreakdownContainer">
+                                <!-- Medical bills breakdown will be populated here -->
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="export-section">
+                        <button id="recalculateBtn" class="btn btn-outline">
+                            <span class="btn-icon">🔄</span>
+                            Recalculate
+                        </button>
                         <button id="exportPdfBtn" class="btn btn-primary">
                             <span class="btn-icon">📄</span>
                             Export to PDF
@@ -294,6 +318,18 @@
                     <div class="form-group">
                         <label for="prescriptionDeductible">Prescription Deductible (if separate)</label>
                         <input type="number" id="prescriptionDeductible" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="familyDeductible">Family Deductible</label>
+                        <input type="number" id="familyDeductible" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="familyOOPMax">Family Out of Pocket Max</label>
+                        <input type="number" id="familyOOPMax" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="planYear">Plan Year</label>
+                        <input type="number" id="planYear" min="2024" max="2030" value="2025">
                     </div>
                     
                     <div class="benefits-section">
@@ -420,7 +456,7 @@
                                 <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
                             </div>
                             <div class="benefit-item">
-                                <label>Surgery/Procedures</label>
+                                <label>Ambulatory Procedures</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
                                     <option value="deductible">Subject to Deductible</option>
