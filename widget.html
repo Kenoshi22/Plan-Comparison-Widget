@@ -103,6 +103,57 @@
                 </div>
             </div>
 
+            <!-- Cost Reference Section -->
+            <div class="section cost-reference">
+                <h2>Service Cost Reference</h2>
+                <p class="section-description">The following flat amounts are used for all calculations. These represent typical costs for each service type.</p>
+                <div class="cost-reference-grid">
+                    <div class="cost-category">
+                        <h3>Primary & Specialist Care</h3>
+                        <ul>
+                            <li>Family Physician Office Visit: <strong>$120</strong></li>
+                            <li>Family Physician Virtual Visit: <strong>$150</strong></li>
+                            <li>Specialist Visit: <strong>$250</strong></li>
+                        </ul>
+                    </div>
+                    <div class="cost-category">
+                        <h3>Urgent & Emergency Care</h3>
+                        <ul>
+                            <li>Urgent Care Visit: <strong>$450</strong></li>
+                            <li>Emergency Room Visit: <strong>$3,000</strong></li>
+                        </ul>
+                    </div>
+                    <div class="cost-category">
+                        <h3>Surgical & Hospital Services</h3>
+                        <ul>
+                            <li>Ambulatory Surgery Center (ASC): <strong>$4,500</strong></li>
+                            <li>Inpatient Hospital Stay: <strong>$2,000 per day</strong></li>
+                            <li>Outpatient Hospital Visit: <strong>$3,000</strong></li>
+                        </ul>
+                    </div>
+                    <div class="cost-category">
+                        <h3>Diagnostic & Imaging Services</h3>
+                        <ul>
+                            <li>Independent Clinical Lab: <strong>$100</strong></li>
+                            <li>Diagnostic Services (EKG, labs): <strong>$500</strong></li>
+                            <li>Imaging Services (MRI, CT): <strong>$1,500</strong></li>
+                        </ul>
+                    </div>
+                    <div class="cost-category">
+                        <h3>Prescription Medications (Self-Pay)</h3>
+                        <ul>
+                            <li>Prescription Tier 1: <strong>$15</strong></li>
+                            <li>Prescription Tier 2: <strong>$50</strong></li>
+                            <li>Prescription Tier 3: <strong>$100</strong></li>
+                            <li>Prescription Tier 4: <strong>$200</strong></li>
+                            <li>Prescription Tier 5: <strong>$400</strong></li>
+                            <li>Prescription Tier 6: <strong>$600</strong></li>
+                            <li>Prescription Tier 7: <strong>$800</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- Usage Scenarios Section -->
             <div class="section usage-scenarios">
                 <h2>Expected Usage Scenario</h2>
@@ -339,7 +390,6 @@
                                 <label>Primary Care Visit</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -351,7 +401,6 @@
                                 <label>Specialist Visit</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -363,7 +412,6 @@
                                 <label>Urgent Care</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -375,7 +423,6 @@
                                 <label>Virtual Visits</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -387,7 +434,6 @@
                                 <label>Emergency Room</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -399,7 +445,6 @@
                                 <label>Lab Tests</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -411,7 +456,6 @@
                                 <label>Basic Imaging (X-Ray, Ultrasound)</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -423,7 +467,6 @@
                                 <label>Advanced Imaging (CT, MRI)</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -435,7 +478,6 @@
                                 <label>Outpatient Visits</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -447,7 +489,6 @@
                                 <label>Inpatient Visits</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -459,7 +500,6 @@
                                 <label>Ambulatory Procedures</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -477,7 +517,6 @@
                                 <label>Tier 1</label>
                                 <select class="tier-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -489,7 +528,6 @@
                                 <label>Tier 2</label>
                                 <select class="tier-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -501,7 +539,6 @@
                                 <label>Tier 3</label>
                                 <select class="tier-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -513,7 +550,6 @@
                                 <label>Tier 4 - Preferred Brand Name</label>
                                 <select class="tier-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -525,7 +561,6 @@
                                 <label>Tier 5 - Non-Preferred Brand Name</label>
                                 <select class="tier-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -537,7 +572,6 @@
                                 <label>Tier 6 - Specialty Drugs</label>
                                 <select class="tier-type">
                                     <option value="copay">Copay</option>
-                                    <option value="deductible">Subject to Deductible</option>
                                     <option value="deductible+coinsurance">Deductible + Coinsurance</option>
                                     <option value="coinsurance">Coinsurance</option>
                                     <option value="deductible+copay">Deductible + Copay</option>
@@ -560,4 +594,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
