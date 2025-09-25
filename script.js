@@ -57,6 +57,12 @@ class SyncBenefitComparison {
         
         // Medical bills
         document.getElementById('addBillBtn').addEventListener('click', () => this.addMedicalBill());
+        
+        // Premiums
+        document.getElementById('savePremiumsBtn').addEventListener('click', () => this.savePremiums());
+        
+        // Recalculate
+        document.getElementById('recalculateBtn').addEventListener('click', () => this.performComparison());
     }
 
     bindModalEvents() {
@@ -109,14 +115,26 @@ class SyncBenefitComparison {
     togglePercentageInput(selectElement) {
         const row = selectElement.closest('.benefit-item, .tier-item');
         const percentageInput = row.querySelector('.benefit-percentage, .tier-percentage');
+        const amountInput = row.querySelector('.benefit-amount, .tier-amount');
         
         if (selectElement.value === 'deductible+coinsurance' || selectElement.value === 'coinsurance') {
             percentageInput.style.display = 'block';
             percentageInput.required = true;
+            if (selectElement.value === 'deductible+coinsurance') {
+                amountInput.placeholder = 'Deductible Amount';
+            } else {
+                amountInput.placeholder = 'Amount';
+            }
+        } else if (selectElement.value === 'deductible+copay') {
+            percentageInput.style.display = 'none';
+            percentageInput.required = false;
+            percentageInput.value = '';
+            amountInput.placeholder = 'Deductible Amount';
         } else {
             percentageInput.style.display = 'none';
             percentageInput.required = false;
             percentageInput.value = '';
+            amountInput.placeholder = 'Amount';
         }
     }
 
@@ -131,8 +149,11 @@ class SyncBenefitComparison {
             annualDeductible: parseInt(document.getElementById('annualDeductible').value) || 0,
             annualOOPMax: parseInt(document.getElementById('annualOOPMax').value) || 0,
             prescriptionDeductible: parseInt(document.getElementById('prescriptionDeductible').value) || 0,
+            familyDeductible: parseInt(document.getElementById('familyDeductible').value) || 0,
+            familyOOPMax: parseInt(document.getElementById('familyOOPMax').value) || 0,
+            planYear: parseInt(document.getElementById('planYear').value) || 2025,
             benefits: this.extractBenefits(),
-            premium: 0, // Will be asked when plan is selected
+            premium: 0, // Will be entered in premiums section
             isCustom: true
         };
         
@@ -224,29 +245,24 @@ class SyncBenefitComparison {
     }
 
     selectPlan(plan) {
+        // Check if plan is already selected
+        const existingPlan = this.selectedPlans.find(p => p.id === plan.id);
+        if (existingPlan) {
+            // Unselect the plan
+            this.removeSelectedPlan(plan.id);
+            return;
+        }
+        
         if (this.selectedPlans.length >= 6) {
             alert('You can select up to 6 plans for comparison');
             return;
         }
         
-        // Ask for premium
-        const premium = prompt(`Enter the annual premium for ${plan.name}:`);
-        if (premium === null) return;
-        
-        const premiumAmount = parseFloat(premium);
-        if (isNaN(premiumAmount) || premiumAmount < 0) {
-            alert('Please enter a valid premium amount');
-            return;
-        }
-        
-        plan.premium = premiumAmount;
-        
-        if (!this.selectedPlans.find(p => p.id === plan.id)) {
-            this.selectedPlans.push(plan);
-            this.updatePlanCardSelection(plan.id, true);
-            this.updateSelectedPlansSummary();
-            this.performComparison();
-        }
+        // Add plan to selected plans (premium will be entered later)
+        this.selectedPlans.push(plan);
+        this.updatePlanCardSelection(plan.id, true);
+        this.updateSelectedPlansSummary();
+        this.showEnterPremiumsSection();
     }
 
     updatePlanCardSelection(planId, selected) {
@@ -325,10 +341,14 @@ class SyncBenefitComparison {
         
         this.comparisonResults = this.selectedPlans.map(plan => {
             const costs = this.calculatePlanCosts(plan);
+            const totalOOP = costs.basicMedical + costs.majorMedical + costs.drugCosts + (costs.medicalBills || 0);
+            const totalCost = totalOOP + plan.premium;
+            
             return {
                 ...plan,
                 ...costs,
-                totalCost: costs.basicMedical + costs.majorMedical + costs.drugCosts + (costs.medicalBills || 0) + plan.premium
+                totalOOP: totalOOP,
+                totalCost: totalCost
             };
         });
         
@@ -365,12 +385,14 @@ class SyncBenefitComparison {
         // Calculate medical bills costs
         costs.medicalBills = this.calculateMedicalBillsCosts(plan);
         
-        // Calculate total out-of-pocket
-        costs.totalOOP = costs.basicMedical + costs.majorMedical + costs.drugCosts + costs.medicalBills;
+        // Calculate total out-of-pocket before applying limits
+        const totalOOPBeforeLimits = costs.basicMedical + costs.majorMedical + costs.drugCosts + costs.medicalBills;
         
         // Apply deductible and OOP max
-        if (costs.totalOOP > plan.annualDeductible) {
-            costs.totalOOP = Math.min(costs.totalOOP, plan.annualOOPMax);
+        if (totalOOPBeforeLimits > plan.annualDeductible) {
+            costs.totalOOP = Math.min(totalOOPBeforeLimits, plan.annualOOPMax);
+        } else {
+            costs.totalOOP = totalOOPBeforeLimits;
         }
         
         return costs;
@@ -473,6 +495,54 @@ class SyncBenefitComparison {
             `;
             tbody.appendChild(row);
         });
+        
+        // Update medical bills breakdown
+        this.updateMedicalBillsBreakdown();
+    }
+    
+    updateMedicalBillsBreakdown() {
+        const breakdownSection = document.getElementById('medicalBillsBreakdown');
+        const breakdownContainer = document.getElementById('billsBreakdownContainer');
+        
+        if (this.medicalBills.length === 0) {
+            breakdownSection.style.display = 'none';
+            return;
+        }
+        
+        breakdownSection.style.display = 'block';
+        breakdownContainer.innerHTML = '';
+        
+        this.medicalBills.forEach(bill => {
+            const breakdownItem = document.createElement('div');
+            breakdownItem.className = 'bill-breakdown-item';
+            
+            const costs = this.selectedPlans.map(plan => {
+                const benefit = plan.benefits[bill.benefitType] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
+                const cost = this.calculateBenefitCost(benefit, 1, bill.amount);
+                return {
+                    planName: plan.name,
+                    cost: cost
+                };
+            });
+            
+            breakdownItem.innerHTML = `
+                <div class="bill-breakdown-header">
+                    <div class="bill-breakdown-title">${bill.description}</div>
+                    <div class="bill-breakdown-amount">$${bill.amount.toLocaleString()}</div>
+                </div>
+                <div class="bill-breakdown-benefit">Benefit Type: ${bill.benefitType}</div>
+                <div class="bill-breakdown-costs">
+                    ${costs.map(cost => `
+                        <div class="bill-breakdown-cost">
+                            <div class="bill-breakdown-cost-plan">${cost.planName}</div>
+                            <div class="bill-breakdown-cost-value">$${cost.cost.toLocaleString()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            breakdownContainer.appendChild(breakdownItem);
+        });
     }
 
 
@@ -511,6 +581,7 @@ class SyncBenefitComparison {
     addMedicalBill() {
         const description = document.getElementById('billDescription').value;
         const amount = parseFloat(document.getElementById('billAmount').value);
+        const benefitType = document.getElementById('billBenefitType').value;
         
         if (!description || !amount || amount <= 0) {
             alert('Please enter a valid description and amount');
@@ -520,7 +591,8 @@ class SyncBenefitComparison {
         const bill = {
             id: Date.now().toString(),
             description: description,
-            amount: amount
+            amount: amount,
+            benefitType: benefitType
         };
         
         this.medicalBills.push(bill);
@@ -543,6 +615,7 @@ class SyncBenefitComparison {
                 <div class="bill-info">
                     <div class="bill-description">${bill.description}</div>
                     <div class="bill-amount">$${bill.amount.toLocaleString()}</div>
+                    <div class="bill-benefit-type">${bill.benefitType}</div>
                 </div>
                 <div class="bill-costs" id="billCosts-${bill.id}">
                     <!-- Costs will be calculated and displayed here -->
@@ -566,9 +639,7 @@ class SyncBenefitComparison {
         
         let totalCost = 0;
         this.medicalBills.forEach(bill => {
-            // For simplicity, we'll use a generic benefit calculation
-            // In a real implementation, you'd need to specify which benefit applies
-            const benefit = plan.benefits['Emergency Room'] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
+            const benefit = plan.benefits[bill.benefitType] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
             totalCost += this.calculateBenefitCost(benefit, 1, bill.amount);
         });
         
@@ -583,7 +654,7 @@ class SyncBenefitComparison {
             if (!costsElement) return;
             
             costsElement.innerHTML = this.selectedPlans.map(plan => {
-                const benefit = plan.benefits['Emergency Room'] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
+                const benefit = plan.benefits[bill.benefitType] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
                 const cost = this.calculateBenefitCost(benefit, 1, bill.amount);
                 return `
                     <div class="bill-cost">
@@ -593,6 +664,54 @@ class SyncBenefitComparison {
                 `;
             }).join('');
         });
+    }
+    
+    // Premium handling methods
+    showEnterPremiumsSection() {
+        const section = document.getElementById('enterPremiumsSection');
+        const grid = document.getElementById('premiumsGrid');
+        
+        grid.innerHTML = '';
+        this.selectedPlans.forEach(plan => {
+            const premiumGroup = document.createElement('div');
+            premiumGroup.className = 'premium-input-group';
+            premiumGroup.innerHTML = `
+                <div class="premium-plan-name">${plan.name}</div>
+                <div class="form-group">
+                    <label for="premium-${plan.id}">Monthly Premium ($)</label>
+                    <input type="number" id="premium-${plan.id}" class="premium-input" min="0" step="0.01" placeholder="Enter monthly premium">
+                </div>
+            `;
+            grid.appendChild(premiumGroup);
+        });
+        
+        section.style.display = 'block';
+    }
+    
+    savePremiums() {
+        let allPremiumsEntered = true;
+        
+        this.selectedPlans.forEach(plan => {
+            const premiumInput = document.getElementById(`premium-${plan.id}`);
+            const monthlyPremium = parseFloat(premiumInput.value);
+            
+            if (isNaN(monthlyPremium) || monthlyPremium < 0) {
+                allPremiumsEntered = false;
+                premiumInput.style.borderColor = 'var(--danger)';
+            } else {
+                plan.premium = monthlyPremium * 12; // Convert to annual
+                premiumInput.style.borderColor = 'var(--border-gray)';
+            }
+        });
+        
+        if (!allPremiumsEntered) {
+            alert('Please enter valid monthly premiums for all selected plans');
+            return;
+        }
+        
+        // Hide premiums section and show comparison
+        document.getElementById('enterPremiumsSection').style.display = 'none';
+        this.performComparison();
     }
     
     // Plan storage functionality
@@ -636,17 +755,15 @@ class SyncBenefitComparison {
             this.hideComparisonResults();
             this.displayMedicalBills();
             
-            // Clear plan grid
-            const planGrid = document.getElementById('planGrid');
-            planGrid.innerHTML = '';
+            // Hide premiums section
+            document.getElementById('enterPremiumsSection').style.display = 'none';
             
-            // Reset all plan cards
+            // Reset all plan cards selection but keep them in grid
             document.querySelectorAll('.plan-card').forEach(card => {
                 card.classList.remove('selected');
             });
             
-            // Reload stored plans
-            this.loadStoredPlans();
+            // Don't clear the plan grid - keep stored plans available
         }
     }
 }
@@ -656,6 +773,4 @@ let syncWidget;
 document.addEventListener('DOMContentLoaded', () => {
     syncWidget = new SyncBenefitComparison();
 });
-
-
 
