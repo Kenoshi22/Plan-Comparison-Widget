@@ -1,5 +1,7 @@
 // Sync Benefit Comparison Widget JavaScript
 
+// Sync Benefit Comparison Widget JavaScript
+
 class SyncBenefitComparison {
     constructor() {
         this.selectedPlans = [];
@@ -109,14 +111,11 @@ class SyncBenefitComparison {
             }
         });
         
-        // Load stored plans on initialization
-        this.loadStoredPlans();
+        // Load CSV plans as default
+        this.loadCSVPlans();
         
-        // Load CSV plans if no stored plans exist or if this is the first time
-        const hasStoredPlans = localStorage.getItem('storedPlans');
-        if (!hasStoredPlans || this.storedPlans.length === 0) {
-            this.loadCSVPlans();
-        }
+        // Also load any stored plans (user-created plans)
+        this.loadStoredPlans();
         
         // Close modals when clicking outside
         window.addEventListener('click', (e) => {
@@ -775,20 +774,26 @@ class SyncBenefitComparison {
     
     // CSV plan import functionality
     parseCSVPlans(csvData) {
+        console.log('Parsing CSV data...');
         const lines = csvData.split('\n');
+        console.log('CSV lines:', lines.length);
         const headers = lines[0].split(',');
+        console.log('Headers:', headers);
         const plans = [];
         
         for (let i = 1; i < lines.length; i++) {
             if (lines[i].trim()) {
                 const values = lines[i].split(',');
+                console.log('Processing line', i, ':', values[0]);
                 const plan = this.createPlanFromCSV(headers, values);
                 if (plan) {
                     plans.push(plan);
+                    console.log('Added plan:', plan.name);
                 }
             }
         }
         
+        console.log('Total plans parsed:', plans.length);
         return plans;
     }
     
@@ -800,7 +805,10 @@ class SyncBenefitComparison {
             });
             
             // Skip if no plan name
-            if (!planData['Plan Name']) return null;
+            if (!planData['Plan Name']) {
+                console.log('Skipping plan - no name:', planData);
+                return null;
+            }
             
             const plan = {
                 id: `csv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -822,9 +830,10 @@ class SyncBenefitComparison {
                 isCSV: true
             };
             
+            console.log('Created plan:', plan.name, plan.type, plan.metalLevel);
             return plan;
         } catch (error) {
-            console.error('Error creating plan from CSV:', error);
+            console.error('Error creating plan from CSV:', error, planData);
             return null;
         }
     }
@@ -951,6 +960,9 @@ class SyncBenefitComparison {
         const planGrid = document.getElementById('planGrid');
         planGrid.innerHTML = '';
         
+        // Clear localStorage
+        localStorage.removeItem('storedPlans');
+        
         // Load CSV plans
         this.loadCSVPlans();
         
@@ -960,8 +972,11 @@ class SyncBenefitComparison {
     loadStoredPlans() {
         const stored = localStorage.getItem('storedPlans');
         if (stored) {
-            this.storedPlans = JSON.parse(stored);
-            this.storedPlans.forEach(plan => {
+            const storedPlans = JSON.parse(stored);
+            // Only add custom plans (not CSV plans) to avoid duplicates
+            const customPlans = storedPlans.filter(plan => plan.isCustom);
+            customPlans.forEach(plan => {
+                this.storedPlans.push(plan);
                 this.addPlanToGrid(plan);
             });
         }
