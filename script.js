@@ -7,11 +7,18 @@ class SyncBenefitComparison {
             primaryVisits: 2,
             specialistVisits: 1,
             urgentCareVisits: 0,
+            virtualVisits: 0,
             erVisits: 0,
             labTests: 3,
-            imagingTests: 0,
+            basicImaging: 0,
+            advancedImaging: 0,
+            outpatientVisits: 0,
+            inpatientVisits: 0,
+            surgeryVisits: 0,
             prescriptionRefills: 2,
-            surgeryVisits: 0
+            tier1Drugs: 1,
+            tier3Drugs: 0,
+            tier5Drugs: 0
         };
         this.comparisonResults = [];
         
@@ -30,9 +37,6 @@ class SyncBenefitComparison {
         
         // Add custom plan button
         document.getElementById('addPlanBtn').addEventListener('click', () => this.showCustomPlanModal());
-        
-        // Load sample plans button
-        document.getElementById('loadSamplePlansBtn').addEventListener('click', () => this.showPdfUploadModal());
         
         // Usage scenario inputs
         const usageInputs = document.querySelectorAll('.usage-inputs input');
@@ -59,15 +63,6 @@ class SyncBenefitComparison {
         cancelPlan.addEventListener('click', () => this.hideModal(customPlanModal));
         savePlan.addEventListener('click', () => this.saveCustomPlan());
         
-        // PDF upload modal
-        const pdfModal = document.getElementById('pdfUploadModal');
-        const pdfModalClose = document.getElementById('pdfModalClose');
-        const uploadZone = document.getElementById('uploadZone');
-        const pdfFile = document.getElementById('pdfFile');
-        
-        pdfModalClose.addEventListener('click', () => this.hideModal(pdfModal));
-        uploadZone.addEventListener('click', () => pdfFile.click());
-        pdfFile.addEventListener('change', (e) => this.handlePdfUpload(e));
         
         // Benefit type changes
         document.addEventListener('change', (e) => {
@@ -100,9 +95,6 @@ class SyncBenefitComparison {
         document.getElementById('customPlanForm').reset();
     }
 
-    showPdfUploadModal() {
-        this.showModal('pdfUploadModal');
-    }
 
     togglePercentageInput(selectElement) {
         const row = selectElement.closest('.benefit-item, .tier-item');
@@ -280,11 +272,18 @@ class SyncBenefitComparison {
             primaryVisits: parseInt(document.getElementById('primaryVisits').value) || 0,
             specialistVisits: parseInt(document.getElementById('specialistVisits').value) || 0,
             urgentCareVisits: parseInt(document.getElementById('urgentCareVisits').value) || 0,
+            virtualVisits: parseInt(document.getElementById('virtualVisits').value) || 0,
             erVisits: parseInt(document.getElementById('erVisits').value) || 0,
             labTests: parseInt(document.getElementById('labTests').value) || 0,
-            imagingTests: parseInt(document.getElementById('imagingTests').value) || 0,
+            basicImaging: parseInt(document.getElementById('basicImaging').value) || 0,
+            advancedImaging: parseInt(document.getElementById('advancedImaging').value) || 0,
+            outpatientVisits: parseInt(document.getElementById('outpatientVisits').value) || 0,
+            inpatientVisits: parseInt(document.getElementById('inpatientVisits').value) || 0,
+            surgeryVisits: parseInt(document.getElementById('surgeryVisits').value) || 0,
             prescriptionRefills: parseInt(document.getElementById('prescriptionRefills').value) || 0,
-            surgeryVisits: parseInt(document.getElementById('surgeryVisits').value) || 0
+            tier1Drugs: parseInt(document.getElementById('tier1Drugs').value) || 0,
+            tier3Drugs: parseInt(document.getElementById('tier3Drugs').value) || 0,
+            tier5Drugs: parseInt(document.getElementById('tier5Drugs').value) || 0
         };
         
         this.performComparison();
@@ -330,14 +329,18 @@ class SyncBenefitComparison {
         costs.basicMedical += this.calculateBenefitCost(plan.benefits['Specialist Visit'], this.usageScenario.specialistVisits, 200);
         costs.basicMedical += this.calculateBenefitCost(plan.benefits['Urgent Care'], this.usageScenario.urgentCareVisits, 100);
         costs.basicMedical += this.calculateBenefitCost(plan.benefits['Lab Tests'], this.usageScenario.labTests, 50);
+        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Virtual Visits'], this.usageScenario.virtualVisits, 75);
         
         // Calculate major medical costs
         costs.majorMedical += this.calculateBenefitCost(plan.benefits['Emergency Room'], this.usageScenario.erVisits, 1000);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Imaging (MRI, CT, etc.)'], this.usageScenario.imagingTests, 500);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Imaging (MRI, CT, etc.)'], this.usageScenario.surgeryVisits, 2000);
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Basic Imaging'], this.usageScenario.basicImaging, 200);
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Advanced Imaging'], this.usageScenario.advancedImaging, 800);
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Outpatient Visits'], this.usageScenario.outpatientVisits, 500);
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Inpatient Visits'], this.usageScenario.inpatientVisits, 2000);
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Surgery/Procedures'], this.usageScenario.surgeryVisits, 1500);
         
         // Calculate drug costs
-        const monthlyDrugCosts = this.calculateDrugCosts(plan.benefits.prescription, this.usageScenario.prescriptionRefills);
+        const monthlyDrugCosts = this.calculateDrugCosts(plan.benefits.prescription, this.usageScenario);
         costs.drugCosts = monthlyDrugCosts * 12;
         
         // Calculate total out-of-pocket
@@ -371,13 +374,13 @@ class SyncBenefitComparison {
         }
     }
 
-    calculateDrugCosts(prescriptionBenefits, monthlyRefills) {
-        if (!prescriptionBenefits || monthlyRefills === 0) return 0;
+    calculateDrugCosts(prescriptionBenefits, usageScenario) {
+        if (!prescriptionBenefits) return 0;
         
-        // Simplified calculation - in reality, this would be more complex
-        const tier1Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 1-2 (Generic)'], monthlyRefills * 0.6, 20);
-        const tier2Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 3-4 (Preferred Brand)'], monthlyRefills * 0.3, 50);
-        const tier3Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 5-7 (Non-Preferred/Specialty)'], monthlyRefills * 0.1, 100);
+        // Calculate drug costs based on tier usage
+        const tier1Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 1-2 (Generic)'], usageScenario.tier1Drugs, 20);
+        const tier2Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 3-4 (Preferred Brand)'], usageScenario.tier3Drugs, 50);
+        const tier3Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 5-7 (Non-Preferred/Specialty)'], usageScenario.tier5Drugs, 100);
         
         return tier1Cost + tier2Cost + tier3Cost;
     }
@@ -440,72 +443,20 @@ class SyncBenefitComparison {
         });
     }
 
-    handlePdfUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        if (file.type !== 'application/pdf') {
-            alert('Please select a PDF file');
-            return;
-        }
-        
-        // Show processing state
-        document.getElementById('pdfProcessing').style.display = 'block';
-        document.getElementById('pdfResults').style.display = 'none';
-        
-        // Simulate PDF processing (in reality, you'd use a PDF parsing library)
-        setTimeout(() => {
-            this.simulatePdfProcessing();
-        }, 2000);
-    }
-
-    simulatePdfProcessing() {
-        // This is a simulation - in reality, you'd parse the PDF
-        const extractedPlans = [
-            {
-                name: 'Plan A from PDF',
-                type: 'HMO',
-                annualDeductible: 1500,
-                annualOOPMax: 5000,
-                benefits: this.getDefaultBenefits()
-            },
-            {
-                name: 'Plan B from PDF',
-                type: 'PPO',
-                annualDeductible: 2000,
-                annualOOPMax: 6000,
-                benefits: this.getDefaultBenefits()
-            }
-        ];
-        
-        document.getElementById('pdfProcessing').style.display = 'none';
-        document.getElementById('pdfResults').style.display = 'block';
-        
-        const extractedPlansDiv = document.getElementById('extractedPlans');
-        extractedPlansDiv.innerHTML = extractedPlans.map(plan => `
-            <div class="extracted-plan">
-                <h5>${plan.name} (${plan.type})</h5>
-                <p>Deductible: $${plan.annualDeductible.toLocaleString()} | OOP Max: $${plan.annualOOPMax.toLocaleString()}</p>
-            </div>
-        `).join('');
-        
-        document.getElementById('confirmPlans').addEventListener('click', () => {
-            extractedPlans.forEach(plan => {
-                plan.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-                this.addPlanToGrid(plan);
-            });
-            this.hideModal(document.getElementById('pdfUploadModal'));
-        });
-    }
 
     getDefaultBenefits() {
         return {
             'Primary Care Visit': { type: 'copay', amount: 25, percentage: 0 },
             'Specialist Visit': { type: 'copay', amount: 50, percentage: 0 },
             'Urgent Care': { type: 'copay', amount: 75, percentage: 0 },
+            'Virtual Visits': { type: 'copay', amount: 25, percentage: 0 },
             'Emergency Room': { type: 'copay', amount: 200, percentage: 0 },
             'Lab Tests': { type: 'deductible', amount: 0, percentage: 0 },
-            'Imaging (MRI, CT, etc.)': { type: 'deductible+coinsurance', amount: 0, percentage: 20 },
+            'Basic Imaging': { type: 'copay', amount: 50, percentage: 0 },
+            'Advanced Imaging': { type: 'deductible+coinsurance', amount: 0, percentage: 20 },
+            'Outpatient Visits': { type: 'deductible+coinsurance', amount: 0, percentage: 20 },
+            'Inpatient Visits': { type: 'deductible+coinsurance', amount: 0, percentage: 20 },
+            'Surgery/Procedures': { type: 'deductible+coinsurance', amount: 0, percentage: 20 },
             prescription: {
                 'Tier 1-2 (Generic)': { type: 'copay', amount: 10, percentage: 0 },
                 'Tier 3-4 (Preferred Brand)': { type: 'copay', amount: 30, percentage: 0 },
@@ -549,6 +500,7 @@ let syncWidget;
 document.addEventListener('DOMContentLoaded', () => {
     syncWidget = new SyncBenefitComparison();
 });
+
 
 
 
