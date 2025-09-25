@@ -448,6 +448,24 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
+.remove-plan-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--danger);
+    color: var(--white);
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.remove-plan-btn:hover {
+    background: #c82333;
+}
+
 /* Usage Scenarios */
 .scenario-container {
     background: var(--light-gray);
@@ -957,3 +975,4 @@ body {
 .d-flex { display: flex; }
 .justify-center { justify-content: center; }
 .align-center { align-items: center; }
+
