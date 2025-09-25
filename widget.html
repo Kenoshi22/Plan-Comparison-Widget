@@ -40,10 +40,6 @@
                         <span class="btn-icon">+</span>
                         Add Custom Plan
                     </button>
-                    <button id="loadSamplePlansBtn" class="btn btn-outline">
-                        <span class="btn-icon">📊</span>
-                        Load Sample Plans from PDF
-                    </button>
                 </div>
                 <div class="selected-plans-summary" id="selectedPlansSummary" style="display: none;">
                     <h4>Selected Plans (<span id="selectedCount">0</span>)</h4>
@@ -72,6 +68,10 @@
                                 <input type="number" id="urgentCareVisits" min="0" value="0" placeholder="0">
                             </div>
                             <div class="input-group">
+                                <label for="virtualVisits">Virtual Visits</label>
+                                <input type="number" id="virtualVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
                                 <label for="erVisits">Emergency Room Visits</label>
                                 <input type="number" id="erVisits" min="0" value="0" placeholder="0">
                             </div>
@@ -80,16 +80,40 @@
                                 <input type="number" id="labTests" min="0" value="3" placeholder="0">
                             </div>
                             <div class="input-group">
-                                <label for="imagingTests">Imaging Tests (MRI, CT, etc.)</label>
-                                <input type="number" id="imagingTests" min="0" value="0" placeholder="0">
+                                <label for="basicImaging">Basic Imaging (X-Ray, Ultrasound)</label>
+                                <input type="number" id="basicImaging" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="advancedImaging">Advanced Imaging (MRI, CT, PET)</label>
+                                <input type="number" id="advancedImaging" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="outpatientVisits">Outpatient Visits</label>
+                                <input type="number" id="outpatientVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="inpatientVisits">Inpatient Visits</label>
+                                <input type="number" id="inpatientVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="surgeryVisits">Surgery/Procedure Visits</label>
+                                <input type="number" id="surgeryVisits" min="0" value="0" placeholder="0">
                             </div>
                             <div class="input-group">
                                 <label for="prescriptionRefills">Prescription Refills (per month)</label>
                                 <input type="number" id="prescriptionRefills" min="0" value="2" placeholder="0">
                             </div>
                             <div class="input-group">
-                                <label for="surgeryVisits">Surgery/Procedure Visits</label>
-                                <input type="number" id="surgeryVisits" min="0" value="0" placeholder="0">
+                                <label for="tier1Drugs">Tier 1-2 Drugs (per month)</label>
+                                <input type="number" id="tier1Drugs" min="0" value="1" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="tier3Drugs">Tier 3-4 Drugs (per month)</label>
+                                <input type="number" id="tier3Drugs" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="tier5Drugs">Tier 5-7 Drugs (per month)</label>
+                                <input type="number" id="tier5Drugs" min="0" value="0" placeholder="0">
                             </div>
                         </div>
                     </div>
@@ -270,6 +294,16 @@
                                 <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
                             </div>
                             <div class="benefit-item">
+                                <label>Virtual Visits</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible">Subject to Deductible</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
                                 <label>Emergency Room</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
@@ -290,7 +324,47 @@
                                 <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
                             </div>
                             <div class="benefit-item">
-                                <label>Imaging (MRI, CT, etc.)</label>
+                                <label>Basic Imaging (X-Ray, Ultrasound)</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible">Subject to Deductible</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Advanced Imaging (MRI, CT, PET)</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible">Subject to Deductible</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Outpatient Visits</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible">Subject to Deductible</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Inpatient Visits</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible">Subject to Deductible</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Surgery/Procedures</label>
                                 <select class="benefit-type">
                                     <option value="copay">Copay</option>
                                     <option value="deductible">Subject to Deductible</option>
@@ -346,35 +420,8 @@
         </div>
     </div>
 
-    <!-- PDF Upload Modal -->
-    <div class="modal" id="pdfUploadModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Upload Plan PDF</h3>
-                <button class="modal-close" id="pdfModalClose">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="upload-area">
-                    <input type="file" id="pdfFile" accept=".pdf" style="display: none;">
-                    <div class="upload-zone" id="uploadZone">
-                        <div class="upload-icon">📄</div>
-                        <p>Click to upload PDF or drag and drop</p>
-                        <p class="upload-hint">PDF files only</p>
-                    </div>
-                </div>
-                <div class="pdf-processing" id="pdfProcessing" style="display: none;">
-                    <div class="processing-spinner"></div>
-                    <p>Processing PDF...</p>
-                </div>
-                <div class="pdf-results" id="pdfResults" style="display: none;">
-                    <h4>Extracted Plan Information</h4>
-                    <div id="extractedPlans"></div>
-                    <button class="btn btn-primary" id="confirmPlans">Confirm Plans</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="script.js"></script>
 </body>
 </html>
+
