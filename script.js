@@ -24,6 +24,28 @@ class SyncBenefitComparison {
         };
         this.medicalBills = [];
         this.storedPlans = [];
+        
+        // Service cost reference for calculations
+        this.serviceCosts = {
+            'Primary Care Visit': 120,
+            'Virtual Visits': 150,
+            'Specialist Visit': 250,
+            'Urgent Care': 450,
+            'Emergency Room': 3000,
+            'Lab Tests': 100,
+            'Basic Imaging': 500,
+            'Advanced Imaging': 1500,
+            'Outpatient Visits': 3000,
+            'Inpatient Visits': 2000, // per day
+            'Surgery/Procedures': 4500,
+            'Ambulatory Procedures': 4500,
+            'Tier 1': 15,
+            'Tier 2': 50,
+            'Tier 3': 100,
+            'Tier 4 - Preferred Brand Name': 200,
+            'Tier 5 - Non-Preferred Brand Name': 400,
+            'Tier 6 - Specialty Drugs': 600
+        };
         this.comparisonResults = [];
         
         this.init();
@@ -87,6 +109,11 @@ class SyncBenefitComparison {
         // Load stored plans on initialization
         this.loadStoredPlans();
         
+        // Load CSV plans if no stored plans exist
+        if (this.storedPlans.length === 0) {
+            this.loadCSVPlans();
+        }
+        
         // Close modals when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -117,24 +144,36 @@ class SyncBenefitComparison {
         const percentageInput = row.querySelector('.benefit-percentage, .tier-percentage');
         const amountInput = row.querySelector('.benefit-amount, .tier-amount');
         
-        if (selectElement.value === 'deductible+coinsurance' || selectElement.value === 'coinsurance') {
+        if (selectElement.value === 'deductible+coinsurance') {
+            // Only show percentage field, hide amount field
             percentageInput.style.display = 'block';
             percentageInput.required = true;
-            if (selectElement.value === 'deductible+coinsurance') {
-                amountInput.placeholder = 'Deductible Amount';
-            } else {
-                amountInput.placeholder = 'Amount';
-            }
+            amountInput.style.display = 'none';
+            amountInput.required = false;
+            amountInput.value = '';
+        } else if (selectElement.value === 'coinsurance') {
+            // Only show percentage field, hide amount field
+            percentageInput.style.display = 'block';
+            percentageInput.required = true;
+            amountInput.style.display = 'none';
+            amountInput.required = false;
+            amountInput.value = '';
         } else if (selectElement.value === 'deductible+copay') {
+            // Show amount field for deductible, hide percentage
             percentageInput.style.display = 'none';
             percentageInput.required = false;
             percentageInput.value = '';
+            amountInput.style.display = 'block';
+            amountInput.required = true;
             amountInput.placeholder = 'Deductible Amount';
         } else {
+            // Copay - show amount field, hide percentage
             percentageInput.style.display = 'none';
             percentageInput.required = false;
             percentageInput.value = '';
-            amountInput.placeholder = 'Amount';
+            amountInput.style.display = 'block';
+            amountInput.required = true;
+            amountInput.placeholder = 'Copay Amount';
         }
     }
 
@@ -218,7 +257,7 @@ class SyncBenefitComparison {
         
         card.innerHTML = `
             <div class="plan-name">${plan.name}</div>
-            <div class="plan-type">${plan.type}</div>
+            <div class="plan-type">${plan.type}${plan.metalLevel ? ' - ' + plan.metalLevel : ''}</div>
             <div class="plan-details">
                 <div class="plan-detail">
                     <span class="plan-detail-label">Deductible:</span>
@@ -232,6 +271,10 @@ class SyncBenefitComparison {
                     <span class="plan-detail-label">Premium:</span>
                     <span class="plan-detail-value">Enter when selected</span>
                 </div>
+                ${plan.carrier ? `<div class="plan-detail">
+                    <span class="plan-detail-label">Carrier:</span>
+                    <span class="plan-detail-value">${plan.carrier}</span>
+                </div>` : ''}
             </div>
             ${plan.isCustom ? '<button class="remove-plan-btn" onclick="syncWidget.removeCustomPlan(\'' + plan.id + '\')">Remove</button>' : ''}
         `;
@@ -364,19 +407,19 @@ class SyncBenefitComparison {
         };
         
         // Calculate basic medical costs
-        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Primary Care Visit'], this.usageScenario.primaryVisits, 150);
-        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Specialist Visit'], this.usageScenario.specialistVisits, 200);
-        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Urgent Care'], this.usageScenario.urgentCareVisits, 100);
-        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Lab Tests'], this.usageScenario.labTests, 50);
-        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Virtual Visits'], this.usageScenario.virtualVisits, 75);
+        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Primary Care Visit'], this.usageScenario.primaryVisits, 'Primary Care Visit');
+        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Specialist Visit'], this.usageScenario.specialistVisits, 'Specialist Visit');
+        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Urgent Care'], this.usageScenario.urgentCareVisits, 'Urgent Care');
+        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Lab Tests'], this.usageScenario.labTests, 'Lab Tests');
+        costs.basicMedical += this.calculateBenefitCost(plan.benefits['Virtual Visits'], this.usageScenario.virtualVisits, 'Virtual Visits');
         
         // Calculate major medical costs
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Emergency Room'], this.usageScenario.erVisits, 1000);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Basic Imaging'], this.usageScenario.basicImaging, 200);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Advanced Imaging'], this.usageScenario.advancedImaging, 800);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Outpatient Visits'], this.usageScenario.outpatientVisits, 500);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Inpatient Visits'], this.usageScenario.inpatientVisits, 2000);
-        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Surgery/Procedures'], this.usageScenario.surgeryVisits, 1500);
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Emergency Room'], this.usageScenario.erVisits, 'Emergency Room');
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Basic Imaging'], this.usageScenario.basicImaging, 'Basic Imaging');
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Advanced Imaging'], this.usageScenario.advancedImaging, 'Advanced Imaging');
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Outpatient Visits'], this.usageScenario.outpatientVisits, 'Outpatient Visits');
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Inpatient Visits'], this.usageScenario.inpatientVisits, 'Inpatient Visits');
+        costs.majorMedical += this.calculateBenefitCost(plan.benefits['Surgery/Procedures'], this.usageScenario.surgeryVisits, 'Surgery/Procedures');
         
         // Calculate drug costs
         const monthlyDrugCosts = this.calculateDrugCosts(plan.benefits.prescription, this.usageScenario);
@@ -398,19 +441,21 @@ class SyncBenefitComparison {
         return costs;
     }
 
-    calculateBenefitCost(benefit, visits, defaultCost) {
+    calculateBenefitCost(benefit, visits, serviceType) {
         if (!benefit || visits === 0) return 0;
         
-        const totalCost = visits * defaultCost;
+        // Use flat amount from serviceCosts instead of defaultCost parameter
+        const serviceCost = this.serviceCosts[serviceType] || 0;
+        const totalCost = visits * serviceCost;
         
         switch (benefit.type) {
             case 'copay':
                 return visits * benefit.amount;
-            case 'deductible':
-                return Math.min(totalCost, benefit.amount);
             case 'deductible+coinsurance':
-                const deductibleAmount = Math.min(totalCost, benefit.amount);
-                const remainingCost = Math.max(0, totalCost - benefit.amount);
+                // For deductible + coinsurance, use the plan's deductible amount
+                const planDeductible = benefit.amount || 0;
+                const deductibleAmount = Math.min(totalCost, planDeductible);
+                const remainingCost = Math.max(0, totalCost - planDeductible);
                 const coinsuranceAmount = remainingCost * (benefit.percentage / 100);
                 return deductibleAmount + coinsuranceAmount;
             case 'coinsurance':
@@ -427,13 +472,13 @@ class SyncBenefitComparison {
     calculateDrugCosts(prescriptionBenefits, usageScenario) {
         if (!prescriptionBenefits) return 0;
         
-        // Calculate drug costs based on tier usage
-        const tier1Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 1'], usageScenario.tier1Drugs, 20);
-        const tier2Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 2'], usageScenario.tier2Drugs, 25);
-        const tier3Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 3'], usageScenario.tier3Drugs, 30);
-        const tier4Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 4 - Preferred Brand Name'], usageScenario.tier4Drugs, 50);
-        const tier5Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 5 - Non-Preferred Brand Name'], usageScenario.tier5Drugs, 80);
-        const tier6Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 6 - Specialty Drugs'], usageScenario.tier6Drugs, 200);
+        // Calculate drug costs based on tier usage using flat amounts
+        const tier1Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 1'], usageScenario.tier1Drugs, 'Tier 1');
+        const tier2Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 2'], usageScenario.tier2Drugs, 'Tier 2');
+        const tier3Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 3'], usageScenario.tier3Drugs, 'Tier 3');
+        const tier4Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 4 - Preferred Brand Name'], usageScenario.tier4Drugs, 'Tier 4 - Preferred Brand Name');
+        const tier5Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 5 - Non-Preferred Brand Name'], usageScenario.tier5Drugs, 'Tier 5 - Non-Preferred Brand Name');
+        const tier6Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 6 - Specialty Drugs'], usageScenario.tier6Drugs, 'Tier 6 - Specialty Drugs');
         
         return tier1Cost + tier2Cost + tier3Cost + tier4Cost + tier5Cost + tier6Cost;
     }
@@ -518,7 +563,8 @@ class SyncBenefitComparison {
             
             const costs = this.selectedPlans.map(plan => {
                 const benefit = plan.benefits[bill.benefitType] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
-                const cost = this.calculateBenefitCost(benefit, 1, bill.amount);
+                const serviceCost = this.serviceCosts[bill.benefitType] || bill.amount;
+                const cost = this.calculateBenefitCost(benefit, 1, serviceCost);
                 return {
                     planName: plan.name,
                     cost: cost
@@ -640,7 +686,9 @@ class SyncBenefitComparison {
         let totalCost = 0;
         this.medicalBills.forEach(bill => {
             const benefit = plan.benefits[bill.benefitType] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
-            totalCost += this.calculateBenefitCost(benefit, 1, bill.amount);
+            // Use the bill amount as the service cost for medical bills
+            const serviceCost = this.serviceCosts[bill.benefitType] || bill.amount;
+            totalCost += this.calculateBenefitCost(benefit, 1, serviceCost);
         });
         
         return totalCost;
@@ -655,7 +703,8 @@ class SyncBenefitComparison {
             
             costsElement.innerHTML = this.selectedPlans.map(plan => {
                 const benefit = plan.benefits[bill.benefitType] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
-                const cost = this.calculateBenefitCost(benefit, 1, bill.amount);
+                const serviceCost = this.serviceCosts[bill.benefitType] || bill.amount;
+                const cost = this.calculateBenefitCost(benefit, 1, serviceCost);
                 return `
                     <div class="bill-cost">
                         <div class="bill-cost-label">${plan.name}</div>
@@ -720,6 +769,174 @@ class SyncBenefitComparison {
         localStorage.setItem('storedPlans', JSON.stringify(this.storedPlans));
     }
     
+    // CSV plan import functionality
+    parseCSVPlans(csvData) {
+        const lines = csvData.split('\n');
+        const headers = lines[0].split(',');
+        const plans = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim()) {
+                const values = lines[i].split(',');
+                const plan = this.createPlanFromCSV(headers, values);
+                if (plan) {
+                    plans.push(plan);
+                }
+            }
+        }
+        
+        return plans;
+    }
+    
+    createPlanFromCSV(headers, values) {
+        try {
+            const planData = {};
+            headers.forEach((header, index) => {
+                planData[header.trim()] = values[index] ? values[index].trim() : '';
+            });
+            
+            // Skip if no plan name
+            if (!planData['Plan Name']) return null;
+            
+            const plan = {
+                id: `csv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                name: planData['Plan Name'],
+                type: this.mapNetworkToType(planData['Network']),
+                annualDeductible: this.parseAmount(planData[' in-network Deductible (individual) ']),
+                annualOOPMax: this.parseAmount(planData[' In-network out of pocket max (individual) ']),
+                familyDeductible: this.parseAmount(planData['  in-network deductible (family) ']),
+                familyOOPMax: this.parseAmount(planData[' In-network out of pocket max (family) ']),
+                planYear: parseInt(planData['Plan Year']) || 2025,
+                carrier: planData['Carrier'],
+                network: planData['Network'],
+                metalLevel: planData['Metal Level'],
+                hsa: planData['HSA (y/n)'] === 'Yes',
+                productType: planData['Product Type'],
+                benefits: this.createBenefitsFromCSV(planData),
+                premium: 0,
+                isCustom: false,
+                isCSV: true
+            };
+            
+            return plan;
+        } catch (error) {
+            console.error('Error creating plan from CSV:', error);
+            return null;
+        }
+    }
+    
+    mapNetworkToType(network) {
+        if (network.includes('BlueOptions')) return 'PPO';
+        if (network.includes('BlueSelect')) return 'PPO';
+        if (network.includes('BlueCare')) return 'HMO';
+        if (network.includes('MyBlue')) return 'HMO';
+        return 'PPO';
+    }
+    
+    parseAmount(amountStr) {
+        if (!amountStr || amountStr === 'Not Covered') return 0;
+        const cleaned = amountStr.replace(/[$,]/g, '');
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+    
+    createBenefitsFromCSV(planData) {
+        const benefits = {};
+        
+        // Map CSV columns to benefit types
+        const benefitMapping = {
+            'Family Physician Office visit': 'Primary Care Visit',
+            'Family Physician Virtual Visit': 'Virtual Visits',
+            'Specialist vist': 'Specialist Visit',
+            'Urgent Care': 'Urgent Care',
+            'Emergency Room visit': 'Emergency Room',
+            'Abulatory Surgery Center': 'Ambulatory Procedures',
+            'Inpatient Hospital': 'Inpatient Visits',
+            'Outpatient Hospital': 'Outpatient Visits',
+            'Independent Clinical Lab': 'Lab Tests',
+            'Diagnostic Services': 'Basic Imaging',
+            'Imaging Services ': 'Advanced Imaging'
+        };
+        
+        Object.entries(benefitMapping).forEach(([csvKey, benefitKey]) => {
+            const value = planData[csvKey];
+            if (value && value !== 'Not Covered') {
+                benefits[benefitKey] = this.parseBenefitValue(value);
+            }
+        });
+        
+        // Add prescription benefits
+        benefits.prescription = this.createPrescriptionBenefits(planData);
+        
+        return benefits;
+    }
+    
+    parseBenefitValue(value) {
+        if (value.includes('DED +')) {
+            const parts = value.split('DED +');
+            const percentage = parseFloat(parts[1].replace('%', ''));
+            return {
+                type: 'deductible+coinsurance',
+                amount: 0, // Will use plan deductible
+                percentage: percentage || 0
+            };
+        } else if (value.includes('%')) {
+            const percentage = parseFloat(value.replace('%', ''));
+            return {
+                type: 'coinsurance',
+                amount: 0,
+                percentage: percentage || 0
+            };
+        } else {
+            const amount = this.parseAmount(value);
+            return {
+                type: 'copay',
+                amount: amount,
+                percentage: 0
+            };
+        }
+    }
+    
+    createPrescriptionBenefits(planData) {
+        const prescriptionBenefits = {};
+        
+        const tierMapping = {
+            'Prescription Tier 1': 'Tier 1',
+            'Prescription Tier 2': 'Tier 2',
+            'Prescription Tier 3': 'Tier 3',
+            'Prescription Tier 4': 'Tier 4 - Preferred Brand Name',
+            'Prescription Tier 5': 'Tier 5 - Non-Preferred Brand Name',
+            'Prescription Tier 6': 'Tier 6 - Specialty Drugs'
+        };
+        
+        Object.entries(tierMapping).forEach(([csvKey, tierKey]) => {
+            const value = planData[csvKey];
+            if (value && value !== 'Not Covered') {
+                prescriptionBenefits[tierKey] = this.parseBenefitValue(value);
+            }
+        });
+        
+        return prescriptionBenefits;
+    }
+    
+    loadCSVPlans() {
+        // This would typically load from a file, but for now we'll add the data directly
+        const csvData = `Plan Name,Network,Metal Level,HSA (y/n),Product Type,Carrier,Plan Year, in-network Deductible (individual) ,  in-network deductible (family) , Out-of-network Deductible (individual) , Out-of-network Deductible (family) , Coinsurance (in-network) , Coinsurance (out-of-network) , In-network out of pocket max (individual) , In-network out of pocket max (family) , out-of-network out of pocket max (individual)  , out-of-network out of pocket max (family) ,Family Physician Office visit,Family Physician Virtual Visit,Specialist vist,Prescription Deductible ,Prescription Tier 1,Prescription Tier 2,Prescription Tier 3,Prescription Tier 4,Prescription Tier 5,Prescription Tier 6,Prescription Tier 7,Urgent Care,Emergency Room visit,Abulatory Surgery Center,Inpatient Hospital,Outpatient Hospital,Independent Clinical Lab,Diagnostic Services,Imaging Services 
+24J01-08,BlueOptions ,Platinum ,No,U65 On Exchange,Florida Blue,2025,$0.00 ,$0.00 ,$500.00 ,$0.00 ,20%,50%,"$2,275.00 ","$4,550.00 ","$12,500.00 ","$25,000.00 ",$10.00 ,$0.00 ,$20.00 ,$0.00 ,$0.00 ,$4.00 ,$10.00 ,$20.00 ,$40.00 ,30%,50%,$20.00 ,$225.00 ,$200.00 ,350 per day 1050 max,$300.00 ,$0.00 ,$75.00 ,$150.00 
+1457,BlueSelect,Platinum ,No,U65 On Exchange,Florida Blue,2025,$0.00 ,$0.00 ,$500.00 ,$0.00 ,20%,50%,"$2,275.00 ","$4,550.00 ","$12,500.00 ","$25,000.00 ",$10.00 ,$0.00 ,$20.00 ,$0.00 ,$0.00 ,$4.00 ,$10.00 ,$20.00 ,$40.00 ,30%,50%,$20.00 ,$225.00 ,$200.00 ,350 per day 1050 max,$300.00 ,$0.00 ,$75.00 ,$150.00 
+24K01-07 ,BlueCare,Platinum ,No,U65 On Exchange,Florida Blue,2025,$0.00 ,$0.00 ,$500.00 ,$0.00 ,20%,50%,"$2,275.00 ","$4,550.00 ","$12,500.00 ","$25,000.00 ",$10.00 ,$0.00 ,$20.00 ,$0.00 ,$0.00 ,$4.00 ,$10.00 ,$20.00 ,$40.00 ,30%,50%,$20.00 ,$225.00 ,$200.00 ,350 per day 1050 max,$300.00 ,$0.00 ,$75.00 ,$150.00 
+24K01-015,BlueCare,Platinum ,No,U65 On Exchange,Florida Blue,2025,$0.00 ,$0.00 ,$500.00 ,$0.00 ,20%,50%,"$2,275.00 ","$4,550.00 ","$12,500.00 ","$25,000.00 ",$10.00 ,$0.00 ,$20.00 ,$0.00 ,$0.00 ,$4.00 ,$10.00 ,$20.00 ,$40.00 ,30%,50%,$20.00 ,$225.00 ,$200.00 ,350 per day 1050 max,$300.00 ,$0.00 ,$75.00 ,$150.00 
+24J01-05,BlueOptions ,Platinum ,No,U65 On Exchange,Florida Blue,2025,"$1,000.00 ","$2,000.00 ","$2,000.00 ","$4,000.00 ",10%,50%,"$4,000.00 ","$8,000.00 ","$8,000.00 ","$16,000.00 ",$15.00 ,$0.00 ,$35.00 ,$0.00 ,$0.00 ,$4.00 ,$15.00 ,$23.00 ,$45.00 ,30%,50%,$35.00 ,DED + 10%,DED + 10%,DED + 10%,DED + 10%,$0.00 ,DED + 10%,DED + 10%`;
+        
+        const csvPlans = this.parseCSVPlans(csvData);
+        csvPlans.forEach(plan => {
+            this.storedPlans.push(plan);
+            this.addPlanToGrid(plan);
+        });
+        
+        localStorage.setItem('storedPlans', JSON.stringify(this.storedPlans));
+    }
+    
     loadStoredPlans() {
         const stored = localStorage.getItem('storedPlans');
         if (stored) {
@@ -773,4 +990,5 @@ let syncWidget;
 document.addEventListener('DOMContentLoaded', () => {
     syncWidget = new SyncBenefitComparison();
 });
+
 
