@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Plan Comparison Widget</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <!-- Header -->
+        <div class="widget-header">
+            <div class="header-content">
+                <h1>Health Plan Comparison Tool</h1>
+                <p>Compare health insurance plans and estimate your annual costs based on expected usage</p>
+                <div class="header-actions">
+                    <button id="resetBtn" class="btn btn-outline btn-sm">Reset All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="widget-content">
+            <!-- Plan Selection Section -->
+            <div class="section plan-selection">
+                <h2>Select Plans to Compare</h2>
+                <p class="section-description">Choose up to 6 health insurance plans to compare. Click on a plan to select it for comparison.</p>
+                <div class="plan-grid" id="planGrid">
+                    <!-- Plans will be dynamically loaded here -->
+                </div>
+                <div class="add-plan-section">
+                    <button id="addPlanBtn" class="btn btn-secondary">
+                        <span class="btn-icon">+</span>
+                        Add Custom Plan
+                    </button>
+                    <button id="loadSamplePlansBtn" class="btn btn-outline">
+                        <span class="btn-icon">📊</span>
+                        Load Sample Plans
+                    </button>
+                </div>
+                <div class="selected-plans-summary" id="selectedPlansSummary" style="display: none;">
+                    <h4>Selected Plans (<span id="selectedCount">0</span>)</h4>
+                    <div id="selectedPlansList"></div>
+                </div>
+            </div>
+
+            <!-- Usage Scenarios Section -->
+            <div class="section usage-scenarios">
+                <h2>Expected Usage Scenario</h2>
+                <p class="section-description">Select a usage scenario to estimate your healthcare costs. This helps calculate which plan offers the best value for your expected needs.</p>
+                
+                <div class="scenario-tabs">
+                    <button class="tab-btn active" data-scenario="basic">
+                        <span class="tab-icon">🏥</span>
+                        <span class="tab-label">Basic Use</span>
+                        <span class="tab-desc">Healthy individual with routine care</span>
+                    </button>
+                    <button class="tab-btn" data-scenario="worst">
+                        <span class="tab-icon">⚠️</span>
+                        <span class="tab-label">Worst Case</span>
+                        <span class="tab-desc">Maximum out-of-pocket scenario</span>
+                    </button>
+                    <button class="tab-btn" data-scenario="custom">
+                        <span class="tab-icon">⚙️</span>
+                        <span class="tab-label">Custom</span>
+                        <span class="tab-desc">Define your own usage</span>
+                    </button>
+                </div>
+                
+                <div class="scenario-content" id="scenarioContent">
+                    <!-- Scenario content will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Comparison Results Section -->
+            <div class="section comparison-results">
+                <h2>Plan Comparison Results</h2>
+                <p class="section-description">Review the cost comparison based on your selected plans and usage scenario.</p>
+                
+                <div class="results-controls">
+                    <div class="calculate-section">
+                        <button id="calculateBtn" class="btn btn-primary">
+                            <span class="btn-icon">📊</span>
+                            Calculate Comparison
+                        </button>
+                        <div class="calculation-status" id="calculationStatus"></div>
+                    </div>
+                    <div class="export-buttons">
+                        <button id="exportPdfBtn" class="btn btn-outline" disabled>
+                            <span class="btn-icon">📄</span>
+                            Export PDF
+                        </button>
+                        <button id="exportExcelBtn" class="btn btn-outline" disabled>
+                            <span class="btn-icon">📊</span>
+                            Export Excel
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="results-table-container" id="resultsContainer">
+                    <div class="no-results">
+                        <div class="no-results-icon">📊</div>
+                        <h3>No Comparison Results</h3>
+                        <p>Select at least one plan and click "Calculate Comparison" to see detailed cost analysis</p>
+                    </div>
+                </div>
+                
+                <!-- Summary Cards -->
+                <div class="summary-cards" id="summaryCards" style="display: none;">
+                    <div class="summary-card best-value">
+                        <h4>Best Value Plan</h4>
+                        <div class="plan-name" id="bestValuePlan">-</div>
+                        <div class="total-cost" id="bestValueCost">-</div>
+                    </div>
+                    <div class="summary-card lowest-premium">
+                        <h4>Lowest Premium</h4>
+                        <div class="plan-name" id="lowestPremiumPlan">-</div>
+                        <div class="total-cost" id="lowestPremiumCost">-</div>
+                    </div>
+                    <div class="summary-card lowest-oop">
+                        <h4>Lowest Out-of-Pocket</h4>
+                        <div class="plan-name" id="lowestOOPPlan">-</div>
+                        <div class="total-cost" id="lowestOOPCost">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="widget-footer">
+            <p>Health Plan Comparison Tool - Powered by Zoho CRM</p>
+        </div>
+    </div>
+
+    <!-- Plan Details Modal -->
+    <div id="planModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add/Edit Health Plan</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="planModalBody">
+                <!-- Plan details form will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button id="savePlanBtn" class="btn btn-primary">
+                    <span class="btn-icon">💾</span>
+                    Save Plan
+                </button>
+                <button id="cancelPlanBtn" class="btn btn-secondary">
+                    <span class="btn-icon">❌</span>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Calculating comparison...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
