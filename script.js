@@ -15,11 +15,15 @@ class SyncBenefitComparison {
             outpatientVisits: 0,
             inpatientVisits: 0,
             surgeryVisits: 0,
-            prescriptionRefills: 2,
             tier1Drugs: 1,
+            tier2Drugs: 0,
             tier3Drugs: 0,
-            tier5Drugs: 0
+            tier4Drugs: 0,
+            tier5Drugs: 0,
+            tier6Drugs: 0
         };
+        this.medicalBills = [];
+        this.storedPlans = [];
         this.comparisonResults = [];
         
         this.init();
@@ -50,6 +54,9 @@ class SyncBenefitComparison {
         // Export buttons
         document.getElementById('exportPdfBtn').addEventListener('click', () => this.exportToPDF());
         document.getElementById('exportExcelBtn').addEventListener('click', () => this.exportToExcel());
+        
+        // Medical bills
+        document.getElementById('addBillBtn').addEventListener('click', () => this.addMedicalBill());
     }
 
     bindModalEvents() {
@@ -70,6 +77,9 @@ class SyncBenefitComparison {
                 this.togglePercentageInput(e.target);
             }
         });
+        
+        // Load stored plans on initialization
+        this.loadStoredPlans();
         
         // Close modals when clicking outside
         window.addEventListener('click', (e) => {
@@ -100,7 +110,7 @@ class SyncBenefitComparison {
         const row = selectElement.closest('.benefit-item, .tier-item');
         const percentageInput = row.querySelector('.benefit-percentage, .tier-percentage');
         
-        if (selectElement.value === 'deductible+coinsurance') {
+        if (selectElement.value === 'deductible+coinsurance' || selectElement.value === 'coinsurance') {
             percentageInput.style.display = 'block';
             percentageInput.required = true;
         } else {
@@ -122,7 +132,8 @@ class SyncBenefitComparison {
             annualOOPMax: parseInt(document.getElementById('annualOOPMax').value) || 0,
             prescriptionDeductible: parseInt(document.getElementById('prescriptionDeductible').value) || 0,
             benefits: this.extractBenefits(),
-            premium: 0 // Will be asked when plan is selected
+            premium: 0, // Will be asked when plan is selected
+            isCustom: true
         };
         
         if (!plan.name) {
@@ -131,6 +142,7 @@ class SyncBenefitComparison {
         }
         
         this.addPlanToGrid(plan);
+        this.storePlan(plan);
         this.hideModal(document.getElementById('customPlanModal'));
     }
 
@@ -200,9 +212,14 @@ class SyncBenefitComparison {
                     <span class="plan-detail-value">Enter when selected</span>
                 </div>
             </div>
+            ${plan.isCustom ? '<button class="remove-plan-btn" onclick="syncWidget.removeCustomPlan(\'' + plan.id + '\')">Remove</button>' : ''}
         `;
         
-        card.addEventListener('click', () => this.selectPlan(plan));
+        card.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('remove-plan-btn')) {
+                this.selectPlan(plan);
+            }
+        });
         return card;
     }
 
@@ -280,10 +297,12 @@ class SyncBenefitComparison {
             outpatientVisits: parseInt(document.getElementById('outpatientVisits').value) || 0,
             inpatientVisits: parseInt(document.getElementById('inpatientVisits').value) || 0,
             surgeryVisits: parseInt(document.getElementById('surgeryVisits').value) || 0,
-            prescriptionRefills: parseInt(document.getElementById('prescriptionRefills').value) || 0,
             tier1Drugs: parseInt(document.getElementById('tier1Drugs').value) || 0,
+            tier2Drugs: parseInt(document.getElementById('tier2Drugs').value) || 0,
             tier3Drugs: parseInt(document.getElementById('tier3Drugs').value) || 0,
-            tier5Drugs: parseInt(document.getElementById('tier5Drugs').value) || 0
+            tier4Drugs: parseInt(document.getElementById('tier4Drugs').value) || 0,
+            tier5Drugs: parseInt(document.getElementById('tier5Drugs').value) || 0,
+            tier6Drugs: parseInt(document.getElementById('tier6Drugs').value) || 0
         };
         
         this.performComparison();
@@ -309,7 +328,7 @@ class SyncBenefitComparison {
             return {
                 ...plan,
                 ...costs,
-                totalCost: costs.basicMedical + costs.majorMedical + costs.drugCosts + plan.premium
+                totalCost: costs.basicMedical + costs.majorMedical + costs.drugCosts + (costs.medicalBills || 0) + plan.premium
             };
         });
         
@@ -343,8 +362,11 @@ class SyncBenefitComparison {
         const monthlyDrugCosts = this.calculateDrugCosts(plan.benefits.prescription, this.usageScenario);
         costs.drugCosts = monthlyDrugCosts * 12;
         
+        // Calculate medical bills costs
+        costs.medicalBills = this.calculateMedicalBillsCosts(plan);
+        
         // Calculate total out-of-pocket
-        costs.totalOOP = costs.basicMedical + costs.majorMedical + costs.drugCosts;
+        costs.totalOOP = costs.basicMedical + costs.majorMedical + costs.drugCosts + costs.medicalBills;
         
         // Apply deductible and OOP max
         if (costs.totalOOP > plan.annualDeductible) {
@@ -369,6 +391,12 @@ class SyncBenefitComparison {
                 const remainingCost = Math.max(0, totalCost - benefit.amount);
                 const coinsuranceAmount = remainingCost * (benefit.percentage / 100);
                 return deductibleAmount + coinsuranceAmount;
+            case 'coinsurance':
+                return totalCost * (benefit.percentage / 100);
+            case 'deductible+copay':
+                const dedAmount = Math.min(totalCost, benefit.amount);
+                const copayAmount = visits * (benefit.copay || 0);
+                return dedAmount + copayAmount;
             default:
                 return totalCost;
         }
@@ -378,11 +406,14 @@ class SyncBenefitComparison {
         if (!prescriptionBenefits) return 0;
         
         // Calculate drug costs based on tier usage
-        const tier1Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 1-2 (Generic)'], usageScenario.tier1Drugs, 20);
-        const tier2Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 3-4 (Preferred Brand)'], usageScenario.tier3Drugs, 50);
-        const tier3Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 5-7 (Non-Preferred/Specialty)'], usageScenario.tier5Drugs, 100);
+        const tier1Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 1'], usageScenario.tier1Drugs, 20);
+        const tier2Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 2'], usageScenario.tier2Drugs, 25);
+        const tier3Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 3'], usageScenario.tier3Drugs, 30);
+        const tier4Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 4 - Preferred Brand Name'], usageScenario.tier4Drugs, 50);
+        const tier5Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 5 - Non-Preferred Brand Name'], usageScenario.tier5Drugs, 80);
+        const tier6Cost = this.calculateBenefitCost(prescriptionBenefits['Tier 6 - Specialty Drugs'], usageScenario.tier6Drugs, 200);
         
-        return tier1Cost + tier2Cost + tier3Cost;
+        return tier1Cost + tier2Cost + tier3Cost + tier4Cost + tier5Cost + tier6Cost;
     }
 
     displayComparisonResults() {
@@ -436,6 +467,7 @@ class SyncBenefitComparison {
                 <td>$${plan.basicMedical.toLocaleString()}</td>
                 <td>$${plan.majorMedical.toLocaleString()}</td>
                 <td>$${plan.drugCosts.toLocaleString()}</td>
+                <td>$${(plan.medicalBills || 0).toLocaleString()}</td>
                 <td>$${plan.totalOOP.toLocaleString()}</td>
                 <td><strong>$${plan.totalCost.toLocaleString()}</strong></td>
             `;
@@ -475,13 +507,134 @@ class SyncBenefitComparison {
         alert('Excel export functionality will be implemented with SheetJS library');
     }
 
+    // Medical Bills functionality
+    addMedicalBill() {
+        const description = document.getElementById('billDescription').value;
+        const amount = parseFloat(document.getElementById('billAmount').value);
+        
+        if (!description || !amount || amount <= 0) {
+            alert('Please enter a valid description and amount');
+            return;
+        }
+        
+        const bill = {
+            id: Date.now().toString(),
+            description: description,
+            amount: amount
+        };
+        
+        this.medicalBills.push(bill);
+        this.displayMedicalBills();
+        this.performComparison();
+        
+        // Clear form
+        document.getElementById('billDescription').value = '';
+        document.getElementById('billAmount').value = '';
+    }
+    
+    displayMedicalBills() {
+        const billsList = document.getElementById('billsList');
+        billsList.innerHTML = '';
+        
+        this.medicalBills.forEach(bill => {
+            const billElement = document.createElement('div');
+            billElement.className = 'bill-item';
+            billElement.innerHTML = `
+                <div class="bill-info">
+                    <div class="bill-description">${bill.description}</div>
+                    <div class="bill-amount">$${bill.amount.toLocaleString()}</div>
+                </div>
+                <div class="bill-costs" id="billCosts-${bill.id}">
+                    <!-- Costs will be calculated and displayed here -->
+                </div>
+                <button class="remove-bill" onclick="syncWidget.removeMedicalBill('${bill.id}')">&times;</button>
+            `;
+            billsList.appendChild(billElement);
+        });
+        
+        this.updateMedicalBillsCosts();
+    }
+    
+    removeMedicalBill(billId) {
+        this.medicalBills = this.medicalBills.filter(bill => bill.id !== billId);
+        this.displayMedicalBills();
+        this.performComparison();
+    }
+    
+    calculateMedicalBillsCosts(plan) {
+        if (this.medicalBills.length === 0) return 0;
+        
+        let totalCost = 0;
+        this.medicalBills.forEach(bill => {
+            // For simplicity, we'll use a generic benefit calculation
+            // In a real implementation, you'd need to specify which benefit applies
+            const benefit = plan.benefits['Emergency Room'] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
+            totalCost += this.calculateBenefitCost(benefit, 1, bill.amount);
+        });
+        
+        return totalCost;
+    }
+    
+    updateMedicalBillsCosts() {
+        if (this.selectedPlans.length === 0) return;
+        
+        this.medicalBills.forEach(bill => {
+            const costsElement = document.getElementById(`billCosts-${bill.id}`);
+            if (!costsElement) return;
+            
+            costsElement.innerHTML = this.selectedPlans.map(plan => {
+                const benefit = plan.benefits['Emergency Room'] || { type: 'deductible', amount: plan.annualDeductible, percentage: 20 };
+                const cost = this.calculateBenefitCost(benefit, 1, bill.amount);
+                return `
+                    <div class="bill-cost">
+                        <div class="bill-cost-label">${plan.name}</div>
+                        <div class="bill-cost-value">$${cost.toLocaleString()}</div>
+                    </div>
+                `;
+            }).join('');
+        });
+    }
+    
+    // Plan storage functionality
+    storePlan(plan) {
+        this.storedPlans.push(plan);
+        localStorage.setItem('storedPlans', JSON.stringify(this.storedPlans));
+    }
+    
+    loadStoredPlans() {
+        const stored = localStorage.getItem('storedPlans');
+        if (stored) {
+            this.storedPlans = JSON.parse(stored);
+            this.storedPlans.forEach(plan => {
+                this.addPlanToGrid(plan);
+            });
+        }
+    }
+    
+    removeCustomPlan(planId) {
+        // Remove from stored plans
+        this.storedPlans = this.storedPlans.filter(plan => plan.id !== planId);
+        localStorage.setItem('storedPlans', JSON.stringify(this.storedPlans));
+        
+        // Remove from selected plans if selected
+        this.removeSelectedPlan(planId);
+        
+        // Remove from grid
+        const card = document.querySelector(`[data-plan-id="${planId}"]`);
+        if (card) {
+            card.remove();
+        }
+    }
+
     resetAll() {
         if (confirm('Are you sure you want to reset all data?')) {
             this.selectedPlans = [];
             this.comparisonResults = [];
+            this.medicalBills = [];
             this.loadUsageScenario();
             this.updateSelectedPlansSummary();
             this.hideComparisonResults();
+            this.displayMedicalBills();
             
             // Clear plan grid
             const planGrid = document.getElementById('planGrid');
@@ -491,6 +644,9 @@ class SyncBenefitComparison {
             document.querySelectorAll('.plan-card').forEach(card => {
                 card.classList.remove('selected');
             });
+            
+            // Reload stored plans
+            this.loadStoredPlans();
         }
     }
 }
@@ -500,7 +656,6 @@ let syncWidget;
 document.addEventListener('DOMContentLoaded', () => {
     syncWidget = new SyncBenefitComparison();
 });
-
 
 
 
