@@ -951,6 +951,89 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Enhanced Input Styling to match dropdowns */
+.benefit-amount,
+.tier-amount {
+    background: var(--white);
+    border: 2px solid var(--border-gray);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+    min-height: 44px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.benefit-amount:hover,
+.tier-amount:hover {
+    border-color: var(--light-blue);
+    box-shadow: 0 4px 12px rgba(54, 180, 229, 0.15);
+    transform: translateY(-1px);
+}
+
+.benefit-amount:focus,
+.tier-amount:focus {
+    outline: none;
+    border-color: var(--light-blue);
+    box-shadow: 0 0 0 3px rgba(54, 180, 229, 0.1);
+}
+
+.benefit-amount:active,
+.tier-amount:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Cost Reference Section */
+.cost-reference {
+    margin-bottom: 3rem;
+}
+
+.cost-reference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.cost-category {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--medium-blue);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.cost-category h3 {
+    color: var(--dark-blue);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.cost-category ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cost-category li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cost-category li:last-child {
+    border-bottom: none;
+}
+
+.cost-category strong {
+    color: var(--medium-blue);
+    font-weight: 600;
+}
+
 .benefits-section,
 .prescription-section {
     margin-top: 2rem;
@@ -1144,4 +1227,5 @@ body {
 .d-flex { display: flex; }
 .justify-center { justify-content: center; }
 .align-center { align-items: center; }
+
 
