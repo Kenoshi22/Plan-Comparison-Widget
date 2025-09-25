@@ -85,6 +85,9 @@ class SyncBenefitComparison {
         
         // Recalculate
         document.getElementById('recalculateBtn').addEventListener('click', () => this.performComparison());
+        
+        // Load sample plans
+        document.getElementById('loadSamplePlansBtn').addEventListener('click', () => this.loadSamplePlans());
     }
 
     bindModalEvents() {
@@ -109,8 +112,9 @@ class SyncBenefitComparison {
         // Load stored plans on initialization
         this.loadStoredPlans();
         
-        // Load CSV plans if no stored plans exist
-        if (this.storedPlans.length === 0) {
+        // Load CSV plans if no stored plans exist or if this is the first time
+        const hasStoredPlans = localStorage.getItem('storedPlans');
+        if (!hasStoredPlans || this.storedPlans.length === 0) {
             this.loadCSVPlans();
         }
         
@@ -928,13 +932,29 @@ class SyncBenefitComparison {
 24K01-015,BlueCare,Platinum ,No,U65 On Exchange,Florida Blue,2025,$0.00 ,$0.00 ,$500.00 ,$0.00 ,20%,50%,"$2,275.00 ","$4,550.00 ","$12,500.00 ","$25,000.00 ",$10.00 ,$0.00 ,$20.00 ,$0.00 ,$0.00 ,$4.00 ,$10.00 ,$20.00 ,$40.00 ,30%,50%,$20.00 ,$225.00 ,$200.00 ,350 per day 1050 max,$300.00 ,$0.00 ,$75.00 ,$150.00 
 24J01-05,BlueOptions ,Platinum ,No,U65 On Exchange,Florida Blue,2025,"$1,000.00 ","$2,000.00 ","$2,000.00 ","$4,000.00 ",10%,50%,"$4,000.00 ","$8,000.00 ","$8,000.00 ","$16,000.00 ",$15.00 ,$0.00 ,$35.00 ,$0.00 ,$0.00 ,$4.00 ,$15.00 ,$23.00 ,$45.00 ,30%,50%,$35.00 ,DED + 10%,DED + 10%,DED + 10%,DED + 10%,$0.00 ,DED + 10%,DED + 10%`;
         
+        console.log('Loading CSV plans...');
         const csvPlans = this.parseCSVPlans(csvData);
+        console.log('Parsed CSV plans:', csvPlans.length);
+        
         csvPlans.forEach(plan => {
             this.storedPlans.push(plan);
             this.addPlanToGrid(plan);
         });
         
+        console.log('Total stored plans:', this.storedPlans.length);
         localStorage.setItem('storedPlans', JSON.stringify(this.storedPlans));
+    }
+    
+    loadSamplePlans() {
+        // Clear existing plans first
+        this.storedPlans = [];
+        const planGrid = document.getElementById('planGrid');
+        planGrid.innerHTML = '';
+        
+        // Load CSV plans
+        this.loadCSVPlans();
+        
+        alert('Sample plans loaded successfully!');
     }
     
     loadStoredPlans() {
@@ -990,5 +1010,4 @@ let syncWidget;
 document.addEventListener('DOMContentLoaded', () => {
     syncWidget = new SyncBenefitComparison();
 });
-
 
