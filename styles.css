@@ -1303,11 +1303,12 @@ body {
 
 /* Plan Search Section */
 .plan-search-section {
-    margin: 20px 0;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+    margin-bottom: 3rem;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid var(--border-gray);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .search-container {
@@ -1366,4 +1367,116 @@ body {
     border-radius: 4px;
     font-size: 0.9rem;
     color: #1976d2;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: 8px;
+}
+
+.pagination-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    font-weight: 600;
+    color: var(--dark-blue);
+    font-size: 0.9rem;
+}
+
+/* Recalculate Button Styling */
+#recalculateBtn {
+    background: var(--medium-blue);
+    color: var(--white);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(57, 128, 182, 0.3);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+#recalculateBtn:hover {
+    background: var(--dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(1, 22, 137, 0.4);
+}
+
+#recalculateBtn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(57, 128, 182, 0.3);
+}
+
+/* Load Plan Library Button Styling */
+#loadSamplePlansBtn {
+    background: var(--medium-blue);
+    color: var(--white);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(57, 128, 182, 0.3);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+#loadSamplePlansBtn:hover {
+    background: var(--dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(1, 22, 137, 0.4);
+}
+
+#loadSamplePlansBtn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(57, 128, 182, 0.3);
+}
+
+/* Collapsible Cost Reference Section */
+.cost-reference-collapsible {
+    margin-top: 2rem;
+    border-top: 2px solid var(--border-gray);
+    padding-top: 2rem;
+}
+
+.cost-reference-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.cost-reference-header:hover {
+    background: var(--border-gray);
+}
+
+.cost-reference-header h2 {
+    margin: 0;
+    color: var(--dark-blue);
+}
+
+.cost-reference-toggle {
+    font-size: 1.2rem;
+    color: var(--medium-blue);
+    transition: transform 0.3s ease;
+}
+
+.cost-reference-content {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-gray);
 }
