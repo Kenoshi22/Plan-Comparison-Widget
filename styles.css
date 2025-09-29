@@ -1227,3 +1227,131 @@ body {
 .d-flex { display: flex; }
 .justify-center { justify-content: center; }
 .align-center { align-items: center; }
+
+/* Plan Search Section */
+.plan-search-section {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.filter-container {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    min-width: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.plan-card.hidden {
+    display: none;
+}
+
+.search-results-info {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #1976d2;
+}
+
+/* Sync Status */
+.sync-status {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    text-align: center;
+}
+
+#syncStatus {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+/* GitHub Configuration Modal */
+#githubConfigModal .modal-content {
+    max-width: 500px;
+}
+
+#githubConfigModal .form-group {
+    margin-bottom: 20px;
+}
+
+#githubConfigModal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+#githubConfigModal input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#githubConfigModal input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+#githubConfigModal small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+#githubConfigModal small a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+#githubConfigModal small a:hover {
+    text-decoration: underline;
+}
