@@ -117,7 +117,7 @@ class SyncBenefitComparison {
         
         try {
             // Try to load from the plans directory
-            const response = await fetch('../plans/all-plans.json');
+            const response = await fetch('./plans/all-plans.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -286,25 +286,30 @@ class SyncBenefitComparison {
     
     showEnterPremiumsSection() {
         const section = document.getElementById('enterPremiumsSection');
-        section.style.display = 'block';
-        
-        const premiumsGrid = document.getElementById('premiumsGrid');
-        premiumsGrid.innerHTML = '';
-        
-        this.selectedPlans.forEach(plan => {
-            const premiumGroup = document.createElement('div');
-            premiumGroup.className = 'premium-input-group';
-            premiumGroup.innerHTML = `
-                <label class="premium-plan-name">${plan.name}</label>
-                <input type="number" class="premium-input" data-plan-id="${plan.id}" placeholder="Monthly Premium" min="0" step="0.01">
-            `;
-            premiumsGrid.appendChild(premiumGroup);
-        });
+        if (this.selectedPlans.length > 0) {
+            section.style.display = 'block';
+            
+            const premiumsGrid = document.getElementById('premiumsGrid');
+            premiumsGrid.innerHTML = '';
+            
+            this.selectedPlans.forEach(plan => {
+                const premiumGroup = document.createElement('div');
+                premiumGroup.className = 'premium-input-group';
+                premiumGroup.innerHTML = `
+                    <div class="premium-plan-name">${plan.name}</div>
+                    <input type="number" class="premium-input" data-plan-id="${plan.id}" placeholder="Enter monthly premium ($)" min="0" step="0.01">
+                `;
+                premiumsGrid.appendChild(premiumGroup);
+            });
+        } else {
+            section.style.display = 'none';
+        }
     }
     
     savePremiums() {
         const premiumInputs = document.querySelectorAll('.premium-input');
         let allFilled = true;
+        let hasValidPremiums = false;
         
         premiumInputs.forEach(input => {
             const planId = input.dataset.planId;
@@ -314,6 +319,9 @@ class SyncBenefitComparison {
             const plan = this.selectedPlans.find(p => p.id === planId);
             if (plan) {
                 plan.premium = annualPremium;
+                if (monthlyPremium > 0) {
+                    hasValidPremiums = true;
+                }
             }
             
             if (monthlyPremium === 0) {
@@ -326,6 +334,12 @@ class SyncBenefitComparison {
             return;
         }
         
+        if (!hasValidPremiums) {
+            alert('Please enter valid monthly premiums (greater than $0) for at least one plan.');
+            return;
+        }
+        
+        console.log('Premiums saved:', this.selectedPlans.map(p => ({ name: p.name, monthly: p.premium/12, annual: p.premium })));
         this.performComparison();
     }
     
@@ -541,9 +555,10 @@ class SyncBenefitComparison {
         
         this.comparisonResults.forEach(result => {
             const row = document.createElement('tr');
+            const monthlyPremium = result.plan.premium / 12;
             row.innerHTML = `
                 <td>${result.plan.name}</td>
-                <td>$${result.plan.premium.toLocaleString()}</td>
+                <td>$${result.plan.premium.toLocaleString()} <small>($${monthlyPremium.toFixed(2)}/mo)</small></td>
                 <td>$${result.medicalCosts.toLocaleString()}</td>
                 <td>$${result.prescriptionCosts.toLocaleString()}</td>
                 <td>$${result.medicalBillsCosts.toLocaleString()}</td>
@@ -670,7 +685,9 @@ class SyncBenefitComparison {
         // Load plans from JSON file
         await this.loadExamplePlans();
         
-        alert('Plan library loaded successfully!');
+        // Show success message with count
+        const planCount = this.storedPlans.length;
+        alert(`Plan library loaded successfully! ${planCount} plans are now available.`);
     }
     
     resetAll() {
