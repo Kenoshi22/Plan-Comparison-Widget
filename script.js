@@ -117,7 +117,7 @@ class SyncBenefitComparison {
         
         // Try multiple possible paths for the JSON file
         const possiblePaths = [
-            'plan-comparison-widget/plans/all-plans.json',
+            'https://kenoshi22.github.io/Plan-Comparison-Widget/plans/all-plans.json',
         ];
         
         let plans = null;
@@ -1290,6 +1290,7 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
+
 
 
 
