@@ -386,6 +386,20 @@ body {
     font-size: 0.9rem;
 }
 
+.plan-network {
+    color: var(--medium-blue);
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.plan-product-type {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
 .plan-detail {
     display: flex;
     justify-content: space-between;
