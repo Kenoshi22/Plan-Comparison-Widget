@@ -117,7 +117,7 @@ class SyncBenefitComparison {
         
         try {
             // Try to load from the plans directory
-            const response = await fetch('/plans/all-plans.json');
+            const response = await fetch('https://kenoshi22.github.io/Plan-Comparison-Widget/plans/all-plans.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -1275,4 +1275,5 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
+
 
