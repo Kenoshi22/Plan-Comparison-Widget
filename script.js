@@ -240,24 +240,35 @@ class SyncBenefitComparison {
     }
     
     updateSelectedPlansDisplay() {
-        const selectedPlansDiv = document.getElementById('selectedPlans');
+        const selectedPlansDiv = document.getElementById('selectedPlansList');
+        const selectedPlansSummary = document.getElementById('selectedPlansSummary');
+        const selectedCount = document.getElementById('selectedCount');
+        
         selectedPlansDiv.innerHTML = '';
         
-        this.selectedPlans.forEach(plan => {
-            const planDiv = document.createElement('div');
-            planDiv.className = 'selected-plan';
-            planDiv.innerHTML = `
-                <span>${plan.name}</span>
-                <button onclick="syncWidget.removeSelectedPlan('${plan.id}')">×</button>
-            `;
-            selectedPlansDiv.appendChild(planDiv);
-        });
+        if (this.selectedPlans.length > 0) {
+            selectedPlansSummary.style.display = 'block';
+            selectedCount.textContent = this.selectedPlans.length;
+            
+            this.selectedPlans.forEach(plan => {
+                const planDiv = document.createElement('div');
+                planDiv.className = 'selected-plan-tag';
+                planDiv.innerHTML = `
+                    <span>${plan.name}</span>
+                    <button class="remove-plan" onclick="syncWidget.removeSelectedPlan('${plan.id}')">×</button>
+                `;
+                selectedPlansDiv.appendChild(planDiv);
+            });
+        } else {
+            selectedPlansSummary.style.display = 'none';
+        }
     }
     
     removeSelectedPlan(planId) {
         this.selectedPlans = this.selectedPlans.filter(p => p.id !== planId);
         document.querySelector(`[data-plan-id="${planId}"]`).classList.remove('selected');
         this.updateSelectedPlansDisplay();
+        this.showEnterPremiumsSection();
     }
     
     showEnterPremiumsSection() {
@@ -640,7 +651,7 @@ class SyncBenefitComparison {
         // Load plans from JSON file
         await this.loadExamplePlans();
         
-        alert('Sample plans loaded successfully!');
+        alert('Plan library loaded successfully!');
     }
     
     resetAll() {
