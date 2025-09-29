@@ -544,11 +544,13 @@ body {
     border-radius: 8px;
     padding: 1.5rem;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .premium-input-group:hover {
     border-color: var(--light-blue);
-    box-shadow: 0 2px 8px rgba(54, 180, 229, 0.1);
+    box-shadow: 0 4px 12px rgba(54, 180, 229, 0.15);
+    transform: translateY(-1px);
 }
 
 .premium-plan-name {
@@ -556,6 +558,7 @@ body {
     color: var(--dark-blue);
     margin-bottom: 1rem;
     font-size: 1.1rem;
+    text-align: center;
 }
 
 .premium-input {
@@ -564,17 +567,27 @@ body {
     border: 2px solid var(--border-gray);
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: 500;
+    background: var(--light-gray);
 }
 
 .premium-input:focus {
     outline: none;
     border-color: var(--light-blue);
     box-shadow: 0 0 0 3px rgba(54, 180, 229, 0.1);
+    background: var(--white);
+}
+
+.premium-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 .premium-actions {
     text-align: center;
+    margin-top: 1rem;
 }
 
 /* Category Descriptions */
@@ -832,6 +845,13 @@ body {
 .comparison-table td {
     padding: 1rem;
     border-bottom: 1px solid var(--border-gray);
+}
+
+.comparison-table td small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 0.25rem;
 }
 
 .comparison-table tr:hover {
