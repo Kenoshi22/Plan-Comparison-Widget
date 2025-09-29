@@ -71,19 +71,8 @@
                         <span class="btn-icon">📋</span>
                         Load Sample Plans
                     </button>
-                    <button id="configureGitHubBtn" class="btn btn-outline">
-                        <span class="btn-icon">⚙️</span>
-                        Configure GitHub Sync
-                    </button>
-                    <button id="syncPlansBtn" class="btn btn-outline">
-                        <span class="btn-icon">🔄</span>
-                        Sync Plans
-                    </button>
                 </div>
                 
-                <div class="sync-status">
-                    <div id="syncStatus">⚪ Not synced</div>
-                </div>
                 <div class="selected-plans-summary" id="selectedPlansSummary" style="display: none;">
                     <h4>Selected Plans (<span id="selectedCount">0</span>)</h4>
                     <div id="selectedPlansList"></div>
@@ -633,41 +622,6 @@
         </div>
     </div>
 
-    <!-- GitHub Configuration Modal -->
-    <div id="githubConfigModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Configure GitHub Sync</h3>
-                <span class="close" onclick="syncWidget.hideModal('githubConfigModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>Configure GitHub integration to automatically sync plans across your team.</p>
-                <form id="githubConfigForm">
-                    <div class="form-group">
-                        <label for="githubOwner">GitHub Username/Organization:</label>
-                        <input type="text" id="githubOwner" placeholder="your-username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="githubRepo">Repository Name:</label>
-                        <input type="text" id="githubRepo" placeholder="Health_Plan_Comparison" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="githubToken">Personal Access Token:</label>
-                        <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" required>
-                        <small>Create a token at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> with repo permissions</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="currentUser">Your Name:</label>
-                        <input type="text" id="currentUser" placeholder="Your Name" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="syncWidget.hideModal('githubConfigModal')">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="syncWidget.saveGitHubConfig()">Save Configuration</button>
-            </div>
-        </div>
-    </div>
 
     <script src="config.js"></script>
     <script src="script.js"></script>
