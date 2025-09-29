@@ -113,6 +113,11 @@ class SyncBenefitComparison {
                 input.addEventListener('input', () => this.updateUsageScenario());
             }
         });
+        
+        // Scenario button events
+        document.getElementById('lightUsageBtn').addEventListener('click', () => this.setUsageScenario('light'));
+        document.getElementById('mediumUsageBtn').addEventListener('click', () => this.setUsageScenario('medium'));
+        document.getElementById('heavyUsageBtn').addEventListener('click', () => this.setUsageScenario('heavy'));
     }
     
     async loadExamplePlans() {
@@ -431,6 +436,12 @@ class SyncBenefitComparison {
         
         console.log('Premiums saved:', this.selectedPlans.map(p => ({ name: p.name, monthly: p.premium/12, annual: p.premium })));
         this.performComparison();
+        
+        // Scroll to the calculation section
+        const calculationSection = document.getElementById('planBenefitsViewer');
+        if (calculationSection) {
+            calculationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
     
     performComparison() {
@@ -450,11 +461,18 @@ class SyncBenefitComparison {
         this.updateComparisonTable();
         this.updateMedicalBillsBreakdown();
         this.updateSummaryCards();
+        this.updatePlanBenefitsViewer();
         
         // Show the comparison results section
         const comparisonResults = document.getElementById('comparisonResults');
         if (comparisonResults) {
             comparisonResults.style.display = 'block';
+        }
+        
+        // Show the plan benefits viewer
+        const planBenefitsViewer = document.getElementById('planBenefitsViewer');
+        if (planBenefitsViewer) {
+            planBenefitsViewer.style.display = 'block';
         }
     }
     
@@ -640,6 +658,119 @@ class SyncBenefitComparison {
         return mapping[serviceType] || serviceType;
     }
     
+    updatePlanBenefitsViewer() {
+        const container = document.getElementById('benefitsComparisonContainer');
+        container.innerHTML = '';
+        
+        if (this.selectedPlans.length === 0) return;
+        
+        // Create a table for benefits comparison
+        const table = document.createElement('table');
+        table.className = 'benefits-comparison-table';
+        
+        // Create header row
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>Benefit</th>';
+        this.selectedPlans.forEach(plan => {
+            const th = document.createElement('th');
+            th.textContent = plan.name;
+            headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+        
+        // Define benefits to compare
+        const benefits = [
+            { key: 'primaryCare', label: 'Primary Care Visit' },
+            { key: 'specialistVisit', label: 'Specialist Visit' },
+            { key: 'urgentCare', label: 'Urgent Care' },
+            { key: 'emergencyRoom', label: 'Emergency Room' },
+            { key: 'inpatient', label: 'Inpatient Stay' },
+            { key: 'outpatient', label: 'Outpatient Visit' },
+            { key: 'basicImaging', label: 'Basic Imaging' },
+            { key: 'advancedImaging', label: 'Advanced Imaging' },
+            { key: 'labWork', label: 'Lab Tests' },
+            { key: 'ambulatoryProcedures', label: 'Ambulatory Procedures' }
+        ];
+        
+        // Add medical benefits rows
+        benefits.forEach(benefit => {
+            const row = document.createElement('tr');
+            const labelCell = document.createElement('td');
+            labelCell.textContent = benefit.label;
+            row.appendChild(labelCell);
+            
+            this.selectedPlans.forEach(plan => {
+                const cell = document.createElement('td');
+                const planBenefit = plan.benefits[benefit.key];
+                if (planBenefit) {
+                    if (planBenefit.type === 'Copay') {
+                        cell.textContent = `$${planBenefit.amount}`;
+                    } else if (planBenefit.type === 'Deductible + Coinsurance') {
+                        cell.textContent = `$${planBenefit.amount} + ${planBenefit.percentage}%`;
+                    } else if (planBenefit.type === 'Coinsurance') {
+                        cell.textContent = `${planBenefit.percentage}%`;
+                    } else if (planBenefit.type === 'Deductible + Copay') {
+                        cell.textContent = `$${planBenefit.copay}`;
+                    } else {
+                        cell.textContent = planBenefit.type;
+                    }
+                } else {
+                    cell.textContent = 'Not Covered';
+                }
+                row.appendChild(cell);
+            });
+            
+            table.appendChild(row);
+        });
+        
+        // Add prescription benefits section
+        const prescriptionHeader = document.createElement('tr');
+        prescriptionHeader.className = 'prescription-header';
+        prescriptionHeader.innerHTML = '<td colspan="' + (this.selectedPlans.length + 1) + '"><strong>Prescription Benefits</strong></td>';
+        table.appendChild(prescriptionHeader);
+        
+        const prescriptionTiers = [
+            { key: 'tier1', label: 'Tier 1 (Generic)' },
+            { key: 'tier2', label: 'Tier 2 (Preferred Generic)' },
+            { key: 'tier3', label: 'Tier 3 (Preferred Brand)' },
+            { key: 'tier4', label: 'Tier 4 (Non-Preferred Brand)' },
+            { key: 'tier5', label: 'Tier 5 (Specialty)' },
+            { key: 'tier6', label: 'Tier 6 (Specialty High Cost)' }
+        ];
+        
+        prescriptionTiers.forEach(tier => {
+            const row = document.createElement('tr');
+            const labelCell = document.createElement('td');
+            labelCell.textContent = tier.label;
+            row.appendChild(labelCell);
+            
+            this.selectedPlans.forEach(plan => {
+                const cell = document.createElement('td');
+                const tierBenefit = plan.prescriptionBenefits[tier.key];
+                if (tierBenefit) {
+                    if (tierBenefit.type === 'Copay') {
+                        cell.textContent = `$${tierBenefit.amount}`;
+                    } else if (tierBenefit.type === 'Deductible + Coinsurance') {
+                        cell.textContent = `$${tierBenefit.amount} + ${tierBenefit.percentage}%`;
+                    } else if (tierBenefit.type === 'Coinsurance') {
+                        cell.textContent = `${tierBenefit.percentage}%`;
+                    } else if (tierBenefit.type === 'Deductible + Copay') {
+                        cell.textContent = `$${tierBenefit.copay}`;
+                    } else {
+                        cell.textContent = tierBenefit.type;
+                    }
+                } else {
+                    cell.textContent = 'Not Covered';
+                }
+                row.appendChild(cell);
+            });
+            
+            table.appendChild(row);
+        });
+        
+        container.appendChild(table);
+    }
+    
     updateSummaryCards() {
         if (this.comparisonResults.length === 0) return;
         
@@ -683,7 +814,6 @@ class SyncBenefitComparison {
                 <td>$${result.prescriptionCosts.toLocaleString()}</td>
                 <td>$${result.medicalBillsCosts.toLocaleString()}</td>
                 <td>$${result.totalOOP.toLocaleString()}</td>
-                <td>$${result.totalCost.toLocaleString()}</td>
             `;
             tableBody.appendChild(row);
         });
@@ -838,6 +968,85 @@ class SyncBenefitComparison {
     
     hideModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
+    }
+    
+    setUsageScenario(scenario) {
+        const scenarios = {
+            light: {
+                primaryVisits: 2,
+                specialistVisits: 2,
+                urgentCareVisits: 2,
+                erVisits: 0,
+                inpatientVisits: 0,
+                outpatientVisits: 0,
+                basicImaging: 1,
+                advancedImaging: 0,
+                labTests: 1,
+                surgeryVisits: 0,
+                tier1Drugs: 2,
+                tier2Drugs: 1,
+                tier3Drugs: 0,
+                tier4Drugs: 0,
+                tier5Drugs: 0,
+                tier6Drugs: 0
+            },
+            medium: {
+                primaryVisits: 4,
+                specialistVisits: 5,
+                urgentCareVisits: 0,
+                erVisits: 0,
+                inpatientVisits: 0,
+                outpatientVisits: 1,
+                basicImaging: 3,
+                advancedImaging: 1,
+                labTests: 1,
+                surgeryVisits: 0,
+                tier1Drugs: 2,
+                tier2Drugs: 3,
+                tier3Drugs: 2,
+                tier4Drugs: 0,
+                tier5Drugs: 0,
+                tier6Drugs: 0
+            },
+            heavy: {
+                primaryVisits: 6,
+                specialistVisits: 12,
+                urgentCareVisits: 0,
+                erVisits: 1,
+                inpatientVisits: 1, // 3 day stay
+                outpatientVisits: 2,
+                basicImaging: 4,
+                advancedImaging: 2,
+                labTests: 6,
+                surgeryVisits: 0,
+                tier1Drugs: 0,
+                tier2Drugs: 3,
+                tier3Drugs: 3,
+                tier4Drugs: 3,
+                tier5Drugs: 0,
+                tier6Drugs: 0
+            }
+        };
+        
+        const selectedScenario = scenarios[scenario];
+        if (selectedScenario) {
+            // Update all form inputs
+            Object.keys(selectedScenario).forEach(key => {
+                const input = document.getElementById(key);
+                if (input) {
+                    input.value = selectedScenario[key];
+                }
+            });
+            
+            // Update the usage scenario object
+            this.updateUsageScenario();
+            
+            // Highlight the selected button
+            document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(scenario + 'UsageBtn').classList.add('active');
+            
+            console.log(`${scenario} usage scenario applied:`, this.usageScenario);
+        }
     }
     
     updateUsageScenario() {
