@@ -1558,6 +1558,17 @@ body {
     vertical-align: top;
 }
 
+.benefits-comparison-table td * {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
 .benefits-comparison-table tr:hover {
     background: var(--light-gray);
 }
@@ -1598,6 +1609,11 @@ body {
     font-weight: 600;
     color: var(--dark-blue);
     font-size: 0.95rem;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
 }
 
 .benefit-type.not-covered {
