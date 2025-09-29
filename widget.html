@@ -143,7 +143,24 @@
             <!-- Usage Scenarios Section -->
             <div class="section usage-scenarios">
                 <h2>Expected Usage Scenario</h2>
-                <p class="section-description">Enter your expected healthcare usage to calculate which plan offers the best value for your needs.</p>
+                <p class="section-description">Choose a preset scenario or enter your expected healthcare usage to calculate which plan offers the best value for your needs.</p>
+                
+                <!-- Quick Scenario Buttons -->
+                <div class="scenario-buttons">
+                    <button id="lightUsageBtn" class="btn btn-secondary scenario-btn">
+                        <span class="btn-icon">🌱</span>
+                        Light Usage
+                    </button>
+                    <button id="mediumUsageBtn" class="btn btn-secondary scenario-btn">
+                        <span class="btn-icon">⚖️</span>
+                        Medium Usage
+                    </button>
+                    <button id="heavyUsageBtn" class="btn btn-secondary scenario-btn">
+                        <span class="btn-icon">🔥</span>
+                        Heavy Usage
+                    </button>
+                </div>
+                
                 <div class="scenario-container">
                     <div class="custom-scenario">
                         <h3>Custom Usage</h3>
@@ -221,6 +238,15 @@
                 </div>
             </div>
 
+            <!-- Plan Benefits Viewer -->
+            <div class="section plan-benefits-viewer" id="planBenefitsViewer" style="display: none;">
+                <h2>Selected Plan Benefits</h2>
+                <p class="section-description">Compare the benefits and coverage details of your selected plans side by side.</p>
+                <div class="benefits-comparison-container" id="benefitsComparisonContainer">
+                    <!-- Plan benefits will be populated here -->
+                </div>
+            </div>
+
             <!-- Plan Comparison Results -->
             <div class="section comparison-results" id="comparisonResults" style="display: none;">
                 <h2>Plan Comparison Results</h2>
@@ -285,7 +311,6 @@
                                         <th>Drug Costs</th>
                                         <th>Medical Bills</th>
                                         <th>Total OOP</th>
-                                        <th>Total Cost</th>
                                     </tr>
                                 </thead>
                                 <tbody id="comparisonTableBody">
