@@ -480,10 +480,15 @@ class SyncBenefitComparison {
         let totalOOP = 0;
         let totalCost = 0;
         
-        // Calculate medical costs
-        const medicalCosts = this.calculateMedicalCosts(plan);
-        totalOOP += medicalCosts;
-        totalCost += medicalCosts;
+        // Calculate basic medical costs (lab tests, primary care, specialist, urgent care, virtual visits)
+        const basicMedicalCosts = this.calculateBasicMedicalCosts(plan);
+        totalOOP += basicMedicalCosts;
+        totalCost += basicMedicalCosts;
+        
+        // Calculate major medical costs (advanced imaging, ER, inpatient, outpatient, ambulatory procedures)
+        const majorMedicalCosts = this.calculateMajorMedicalCosts(plan);
+        totalOOP += majorMedicalCosts;
+        totalCost += majorMedicalCosts;
         
         // Calculate prescription costs
         const prescriptionCosts = this.calculateDrugCosts(plan.prescriptionBenefits, this.usageScenario);
@@ -508,12 +513,133 @@ class SyncBenefitComparison {
         totalCost = totalOOP + plan.premium;
         
         return {
-            medicalCosts,
+            basicMedicalCosts,
+            majorMedicalCosts,
             prescriptionCosts,
             medicalBillsCosts,
             totalOOP,
             totalCost
         };
+    }
+    
+    calculateBasicMedicalCosts(plan) {
+        let totalCost = 0;
+        
+        // Primary care visits
+        if (this.usageScenario.primaryCareVisits > 0) {
+            const benefit = plan.benefits.primaryCare;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.primaryCareVisits * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.primaryCareVisits * (benefit.amount + (150 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Specialist visits
+        if (this.usageScenario.specialistVisits > 0) {
+            const benefit = plan.benefits.specialistVisit;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.specialistVisits * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.specialistVisits * (benefit.amount + (200 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Urgent care visits
+        if (this.usageScenario.urgentCareVisits > 0) {
+            const benefit = plan.benefits.urgentCare;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.urgentCareVisits * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.urgentCareVisits * (benefit.amount + (150 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Lab tests
+        if (this.usageScenario.labTests > 0) {
+            const benefit = plan.benefits.labWork;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.labTests * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.labTests * (benefit.amount + (100 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        return totalCost;
+    }
+    
+    calculateMajorMedicalCosts(plan) {
+        let totalCost = 0;
+        
+        // Emergency room visits
+        if (this.usageScenario.emergencyRoomVisits > 0) {
+            const benefit = plan.benefits.emergencyRoom;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.emergencyRoomVisits * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.emergencyRoomVisits * (benefit.amount + (2000 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Inpatient stays
+        if (this.usageScenario.inpatientDays > 0) {
+            const benefit = plan.benefits.inpatient;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.inpatientDays * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.inpatientDays * (benefit.amount + (2000 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Outpatient visits
+        if (this.usageScenario.outpatientVisits > 0) {
+            const benefit = plan.benefits.outpatient;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.outpatientVisits * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.outpatientVisits * (benefit.amount + (500 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Advanced imaging
+        if (this.usageScenario.advancedImagingVisits > 0) {
+            const benefit = plan.benefits.advancedImaging;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.advancedImagingVisits * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.advancedImagingVisits * (benefit.amount + (1000 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        // Ambulatory procedures
+        if (this.usageScenario.ambulatoryProcedures > 0) {
+            const benefit = plan.benefits.ambulatoryProcedures;
+            if (benefit && benefit.type !== 'Not Covered') {
+                if (benefit.type === 'Copay') {
+                    totalCost += this.usageScenario.ambulatoryProcedures * benefit.amount;
+                } else if (benefit.type === 'Deductible + Coinsurance') {
+                    totalCost += this.usageScenario.ambulatoryProcedures * (benefit.amount + (800 * benefit.percentage / 100));
+                }
+            }
+        }
+        
+        return totalCost;
     }
     
     calculateMedicalCosts(plan) {
@@ -664,111 +790,130 @@ class SyncBenefitComparison {
         
         if (this.selectedPlans.length === 0) return;
         
-        // Create a table for benefits comparison
-        const table = document.createElement('table');
-        table.className = 'benefits-comparison-table';
-        
-        // Create header row
-        const headerRow = document.createElement('tr');
-        headerRow.innerHTML = '<th>Benefit</th>';
+        // Create cards for each plan
         this.selectedPlans.forEach(plan => {
-            const th = document.createElement('th');
-            th.textContent = plan.name;
-            headerRow.appendChild(th);
-        });
-        table.appendChild(headerRow);
-        
-        // Define benefits to compare
-        const benefits = [
-            { key: 'primaryCare', label: 'Primary Care Visit' },
-            { key: 'specialistVisit', label: 'Specialist Visit' },
-            { key: 'urgentCare', label: 'Urgent Care' },
-            { key: 'emergencyRoom', label: 'Emergency Room' },
-            { key: 'inpatient', label: 'Inpatient Stay' },
-            { key: 'outpatient', label: 'Outpatient Visit' },
-            { key: 'basicImaging', label: 'Basic Imaging' },
-            { key: 'advancedImaging', label: 'Advanced Imaging' },
-            { key: 'labWork', label: 'Lab Tests' },
-            { key: 'ambulatoryProcedures', label: 'Ambulatory Procedures' }
-        ];
-        
-        // Add medical benefits rows
-        benefits.forEach(benefit => {
-            const row = document.createElement('tr');
-            const labelCell = document.createElement('td');
-            labelCell.textContent = benefit.label;
-            row.appendChild(labelCell);
+            const planCard = document.createElement('div');
+            planCard.className = 'plan-benefit-card';
             
-            this.selectedPlans.forEach(plan => {
-                const cell = document.createElement('td');
+            // Plan header
+            const planHeader = document.createElement('div');
+            planHeader.className = 'plan-benefit-header';
+            planHeader.innerHTML = `
+                <h3>${plan.name}</h3>
+                <div class="plan-details">
+                    <span class="metal-level">${plan.metalLevel}</span>
+                    <span class="network">${plan.network}</span>
+                </div>
+            `;
+            planCard.appendChild(planHeader);
+            
+            // Medical benefits section
+            const medicalSection = document.createElement('div');
+            medicalSection.className = 'benefits-section';
+            medicalSection.innerHTML = '<h4>Medical Benefits</h4>';
+            
+            const medicalBenefits = [
+                { key: 'primaryCare', label: 'Primary Care Visit' },
+                { key: 'specialistVisit', label: 'Specialist Visit' },
+                { key: 'urgentCare', label: 'Urgent Care' },
+                { key: 'emergencyRoom', label: 'Emergency Room' },
+                { key: 'inpatient', label: 'Inpatient Stay' },
+                { key: 'outpatient', label: 'Outpatient Visit' },
+                { key: 'basicImaging', label: 'Basic Imaging' },
+                { key: 'advancedImaging', label: 'Advanced Imaging' },
+                { key: 'labWork', label: 'Lab Tests' },
+                { key: 'ambulatoryProcedures', label: 'Ambulatory Procedures' }
+            ];
+            
+            medicalBenefits.forEach(benefit => {
+                const benefitItem = document.createElement('div');
+                benefitItem.className = 'benefit-item';
+                
+                const benefitLabel = document.createElement('span');
+                benefitLabel.className = 'benefit-label';
+                benefitLabel.textContent = benefit.label;
+                
+                const benefitValue = document.createElement('span');
+                benefitValue.className = 'benefit-value';
+                
                 const planBenefit = plan.benefits[benefit.key];
                 if (planBenefit) {
                     if (planBenefit.type === 'Copay') {
-                        cell.textContent = `$${planBenefit.amount}`;
+                        benefitValue.innerHTML = `<span class="benefit-type">$${planBenefit.amount}</span> <span class="benefit-desc">copay</span>`;
                     } else if (planBenefit.type === 'Deductible + Coinsurance') {
-                        cell.textContent = `$${planBenefit.amount} + ${planBenefit.percentage}%`;
+                        benefitValue.innerHTML = `<span class="benefit-type">$${planBenefit.amount} + ${planBenefit.percentage}%</span> <span class="benefit-desc">deductible + coinsurance</span>`;
                     } else if (planBenefit.type === 'Coinsurance') {
-                        cell.textContent = `${planBenefit.percentage}%`;
+                        benefitValue.innerHTML = `<span class="benefit-type">${planBenefit.percentage}%</span> <span class="benefit-desc">coinsurance</span>`;
                     } else if (planBenefit.type === 'Deductible + Copay') {
-                        cell.textContent = `$${planBenefit.copay}`;
+                        benefitValue.innerHTML = `<span class="benefit-type">$${planBenefit.amount}</span> <span class="benefit-desc">deductible + copay</span>`;
+                    } else if (planBenefit.type === 'Deductible') {
+                        benefitValue.innerHTML = `<span class="benefit-type">Deductible</span> <span class="benefit-desc">applies</span>`;
                     } else {
-                        cell.textContent = planBenefit.type;
+                        benefitValue.innerHTML = `<span class="benefit-type">${planBenefit.type}</span>`;
                     }
                 } else {
-                    cell.textContent = 'Not Covered';
+                    benefitValue.innerHTML = `<span class="benefit-type not-covered">Not Covered</span>`;
                 }
-                row.appendChild(cell);
+                
+                benefitItem.appendChild(benefitLabel);
+                benefitItem.appendChild(benefitValue);
+                medicalSection.appendChild(benefitItem);
             });
             
-            table.appendChild(row);
-        });
-        
-        // Add prescription benefits section
-        const prescriptionHeader = document.createElement('tr');
-        prescriptionHeader.className = 'prescription-header';
-        prescriptionHeader.innerHTML = '<td colspan="' + (this.selectedPlans.length + 1) + '"><strong>Prescription Benefits</strong></td>';
-        table.appendChild(prescriptionHeader);
-        
-        const prescriptionTiers = [
-            { key: 'tier1', label: 'Tier 1 (Generic)' },
-            { key: 'tier2', label: 'Tier 2 (Preferred Generic)' },
-            { key: 'tier3', label: 'Tier 3 (Preferred Brand)' },
-            { key: 'tier4', label: 'Tier 4 (Non-Preferred Brand)' },
-            { key: 'tier5', label: 'Tier 5 (Specialty)' },
-            { key: 'tier6', label: 'Tier 6 (Specialty High Cost)' }
-        ];
-        
-        prescriptionTiers.forEach(tier => {
-            const row = document.createElement('tr');
-            const labelCell = document.createElement('td');
-            labelCell.textContent = tier.label;
-            row.appendChild(labelCell);
+            planCard.appendChild(medicalSection);
             
-            this.selectedPlans.forEach(plan => {
-                const cell = document.createElement('td');
+            // Prescription benefits section
+            const prescriptionSection = document.createElement('div');
+            prescriptionSection.className = 'benefits-section';
+            prescriptionSection.innerHTML = '<h4>Prescription Benefits</h4>';
+            
+            const prescriptionTiers = [
+                { key: 'tier1', label: 'Tier 1 (Generic)' },
+                { key: 'tier2', label: 'Tier 2 (Preferred Generic)' },
+                { key: 'tier3', label: 'Tier 3 (Preferred Brand)' },
+                { key: 'tier4', label: 'Tier 4 (Non-Preferred Brand)' },
+                { key: 'tier5', label: 'Tier 5 (Specialty)' },
+                { key: 'tier6', label: 'Tier 6 (Specialty High Cost)' }
+            ];
+            
+            prescriptionTiers.forEach(tier => {
+                const benefitItem = document.createElement('div');
+                benefitItem.className = 'benefit-item';
+                
+                const benefitLabel = document.createElement('span');
+                benefitLabel.className = 'benefit-label';
+                benefitLabel.textContent = tier.label;
+                
+                const benefitValue = document.createElement('span');
+                benefitValue.className = 'benefit-value';
+                
                 const tierBenefit = plan.prescriptionBenefits[tier.key];
                 if (tierBenefit) {
                     if (tierBenefit.type === 'Copay') {
-                        cell.textContent = `$${tierBenefit.amount}`;
+                        benefitValue.innerHTML = `<span class="benefit-type">$${tierBenefit.amount}</span> <span class="benefit-desc">copay</span>`;
                     } else if (tierBenefit.type === 'Deductible + Coinsurance') {
-                        cell.textContent = `$${tierBenefit.amount} + ${tierBenefit.percentage}%`;
+                        benefitValue.innerHTML = `<span class="benefit-type">$${tierBenefit.amount} + ${tierBenefit.percentage}%</span> <span class="benefit-desc">deductible + coinsurance</span>`;
                     } else if (tierBenefit.type === 'Coinsurance') {
-                        cell.textContent = `${tierBenefit.percentage}%`;
+                        benefitValue.innerHTML = `<span class="benefit-type">${tierBenefit.percentage}%</span> <span class="benefit-desc">coinsurance</span>`;
                     } else if (tierBenefit.type === 'Deductible + Copay') {
-                        cell.textContent = `$${tierBenefit.copay}`;
+                        benefitValue.innerHTML = `<span class="benefit-type">$${tierBenefit.amount}</span> <span class="benefit-desc">deductible + copay</span>`;
+                    } else if (tierBenefit.type === 'Deductible') {
+                        benefitValue.innerHTML = `<span class="benefit-type">Deductible</span> <span class="benefit-desc">applies</span>`;
                     } else {
-                        cell.textContent = tierBenefit.type;
+                        benefitValue.innerHTML = `<span class="benefit-type">${tierBenefit.type}</span>`;
                     }
                 } else {
-                    cell.textContent = 'Not Covered';
+                    benefitValue.innerHTML = `<span class="benefit-type not-covered">Not Covered</span>`;
                 }
-                row.appendChild(cell);
+                
+                benefitItem.appendChild(benefitLabel);
+                benefitItem.appendChild(benefitValue);
+                prescriptionSection.appendChild(benefitItem);
             });
             
-            table.appendChild(row);
+            planCard.appendChild(prescriptionSection);
+            container.appendChild(planCard);
         });
-        
-        container.appendChild(table);
     }
     
     updateSummaryCards() {
@@ -810,7 +955,8 @@ class SyncBenefitComparison {
             row.innerHTML = `
                 <td>${result.plan.name}</td>
                 <td>$${result.plan.premium.toLocaleString()} <small>($${monthlyPremium.toFixed(2)}/mo)</small></td>
-                <td>$${result.medicalCosts.toLocaleString()}</td>
+                <td>$${result.basicMedicalCosts.toLocaleString()}</td>
+                <td>$${result.majorMedicalCosts.toLocaleString()}</td>
                 <td>$${result.prescriptionCosts.toLocaleString()}</td>
                 <td>$${result.medicalBillsCosts.toLocaleString()}</td>
                 <td>$${result.totalOOP.toLocaleString()}</td>
@@ -1013,7 +1159,7 @@ class SyncBenefitComparison {
                 specialistVisits: 12,
                 urgentCareVisits: 0,
                 erVisits: 1,
-                inpatientVisits: 1, // 3 day stay
+                inpatientVisits: 3, // 3 day stay
                 outpatientVisits: 2,
                 basicImaging: 4,
                 advancedImaging: 2,
