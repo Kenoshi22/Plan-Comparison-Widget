@@ -25,6 +25,9 @@ class SyncBenefitComparison {
         this.medicalBills = [];
         this.storedPlans = [];
         this.customPlans = [];
+        this.filteredPlans = [];
+        this.currentPage = 1;
+        this.plansPerPage = 9;
         this.serviceCosts = {
             'Primary Care Visit': 120,
             'Specialist Visit': 250,
@@ -117,7 +120,13 @@ class SyncBenefitComparison {
         
         // Try multiple possible paths for the JSON file
         const possiblePaths = [
+            'https://kenoshi22.github.io/plan-comparison-widget/plans/all-plans.json',
             'https://kenoshi22.github.io/Plan-Comparison-Widget/plans/all-plans.json',
+            'https://kenoshi22.github.io/Health_Plan_Comparison/plans/all-plans.json',
+            'https://kenoshi22.github.io/plans/all-plans.json',
+            './plans/all-plans.json',
+            '../plans/all-plans.json',
+            'plans/all-plans.json'
         ];
         
         let plans = null;
@@ -158,6 +167,8 @@ class SyncBenefitComparison {
             });
             
             console.log('Successfully loaded', this.storedPlans.length, 'plans');
+            this.filteredPlans = [...this.storedPlans];
+            this.updatePlanGridDisplay();
         } else {
             console.error('Error loading plans from all paths:', lastError);
             console.log('Falling back to hardcoded example plans...');
@@ -211,13 +222,77 @@ class SyncBenefitComparison {
             });
             
             console.log('Loaded fallback example plans:', this.storedPlans.length);
+            this.filteredPlans = [...this.storedPlans];
+            this.updatePlanGridDisplay();
         }
     }
     
     addPlanToGrid(plan) {
+        // Don't add directly to grid, instead update the display
+        this.updatePlanGridDisplay();
+    }
+    
+    updatePlanGridDisplay() {
         const planGrid = document.getElementById('planGrid');
-        const planCard = this.createPlanCard(plan);
-        planGrid.appendChild(planCard);
+        planGrid.innerHTML = '';
+        
+        const startIndex = (this.currentPage - 1) * this.plansPerPage;
+        const endIndex = startIndex + this.plansPerPage;
+        const plansToShow = this.storedPlans.slice(startIndex, endIndex);
+        
+        plansToShow.forEach(plan => {
+            const planCard = this.createPlanCard(plan);
+            planGrid.appendChild(planCard);
+        });
+        
+        this.updatePaginationControls();
+    }
+    
+    updatePaginationControls() {
+        const totalPages = Math.ceil(this.storedPlans.length / this.plansPerPage);
+        
+        // Remove existing pagination controls
+        const existingPagination = document.getElementById('planPagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+        
+        if (totalPages <= 1) return;
+        
+        // Create pagination controls
+        const paginationDiv = document.createElement('div');
+        paginationDiv.id = 'planPagination';
+        paginationDiv.className = 'pagination-controls';
+        paginationDiv.innerHTML = `
+            <button id="prevPageBtn" class="btn btn-outline btn-sm" ${this.currentPage === 1 ? 'disabled' : ''}>
+                ← Previous
+            </button>
+            <span class="pagination-info">
+                Page ${this.currentPage} of ${totalPages} (${this.storedPlans.length} plans)
+            </span>
+            <button id="nextPageBtn" class="btn btn-outline btn-sm" ${this.currentPage === totalPages ? 'disabled' : ''}>
+                Next →
+            </button>
+        `;
+        
+        // Insert after the plan grid
+        const planGrid = document.getElementById('planGrid');
+        planGrid.parentNode.insertBefore(paginationDiv, planGrid.nextSibling);
+        
+        // Add event listeners
+        document.getElementById('prevPageBtn').addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.updatePlanGridDisplay();
+            }
+        });
+        
+        document.getElementById('nextPageBtn').addEventListener('click', () => {
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.updatePlanGridDisplay();
+            }
+        });
     }
     
     createPlanCard(plan) {
@@ -374,6 +449,7 @@ class SyncBenefitComparison {
         
         this.updateComparisonTable();
         this.updateMedicalBillsBreakdown();
+        this.updateSummaryCards();
         
         // Show the comparison results section
         const comparisonResults = document.getElementById('comparisonResults');
@@ -562,6 +638,35 @@ class SyncBenefitComparison {
             'Ambulatory Procedures': 'ambulatoryProcedures'
         };
         return mapping[serviceType] || serviceType;
+    }
+    
+    updateSummaryCards() {
+        if (this.comparisonResults.length === 0) return;
+        
+        // Sort results by different criteria
+        const byTotalCost = [...this.comparisonResults].sort((a, b) => a.totalCost - b.totalCost);
+        const byTotalOOP = [...this.comparisonResults].sort((a, b) => a.totalOOP - b.totalOOP);
+        const byWorstCase = [...this.comparisonResults].sort((a, b) => b.totalCost - a.totalCost);
+        
+        // Best Value (lowest total cost)
+        const bestValue = byTotalCost[0];
+        document.getElementById('bestValuePlan').textContent = bestValue.plan.name;
+        document.getElementById('bestValueCost').textContent = `$${bestValue.totalCost.toLocaleString()}`;
+        
+        // Best for Worst Case (highest total cost - most comprehensive coverage)
+        const worstCase = byWorstCase[0];
+        document.getElementById('worstCasePlan').textContent = worstCase.plan.name;
+        document.getElementById('worstCaseCost').textContent = `$${worstCase.totalCost.toLocaleString()}`;
+        
+        // Highest OOP Based on Usage
+        const highestOOP = byTotalOOP[byTotalOOP.length - 1];
+        document.getElementById('highestOopPlan').textContent = highestOOP.plan.name;
+        document.getElementById('highestOopCost').textContent = `$${highestOOP.totalOOP.toLocaleString()}`;
+        
+        // Lowest OOP Based on Usage
+        const lowestOOP = byTotalOOP[0];
+        document.getElementById('lowestOopPlan').textContent = lowestOOP.plan.name;
+        document.getElementById('lowestOopCost').textContent = `$${lowestOOP.totalOOP.toLocaleString()}`;
     }
     
     updateComparisonTable() {
@@ -1215,15 +1320,8 @@ class SyncBenefitComparison {
         const network = document.getElementById('networkFilter').value;
         const carrier = document.getElementById('carrierFilter').value;
         
-        const planCards = document.querySelectorAll('.plan-card');
-        let visibleCount = 0;
-        
-        planCards.forEach(card => {
-            const planId = card.getAttribute('data-plan-id');
-            const plan = this.storedPlans.find(p => p.id === planId);
-            
-            if (!plan) return;
-            
+        // Filter the stored plans array
+        this.filteredPlans = this.storedPlans.filter(plan => {
             let show = true;
             
             // Text search
@@ -1249,15 +1347,76 @@ class SyncBenefitComparison {
                 show = false;
             }
             
-            if (show) {
-                card.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                card.classList.add('hidden');
+            return show;
+        });
+        
+        // Reset to first page and update display
+        this.currentPage = 1;
+        this.updateFilteredPlanGridDisplay();
+        this.updateSearchResultsInfo(this.filteredPlans.length, this.storedPlans.length);
+    }
+    
+    updateFilteredPlanGridDisplay() {
+        const planGrid = document.getElementById('planGrid');
+        planGrid.innerHTML = '';
+        
+        const startIndex = (this.currentPage - 1) * this.plansPerPage;
+        const endIndex = startIndex + this.plansPerPage;
+        const plansToShow = this.filteredPlans.slice(startIndex, endIndex);
+        
+        plansToShow.forEach(plan => {
+            const planCard = this.createPlanCard(plan);
+            planGrid.appendChild(planCard);
+        });
+        
+        this.updateFilteredPaginationControls();
+    }
+    
+    updateFilteredPaginationControls() {
+        const totalPages = Math.ceil(this.filteredPlans.length / this.plansPerPage);
+        
+        // Remove existing pagination controls
+        const existingPagination = document.getElementById('planPagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+        
+        if (totalPages <= 1) return;
+        
+        // Create pagination controls
+        const paginationDiv = document.createElement('div');
+        paginationDiv.id = 'planPagination';
+        paginationDiv.className = 'pagination-controls';
+        paginationDiv.innerHTML = `
+            <button id="prevPageBtn" class="btn btn-outline btn-sm" ${this.currentPage === 1 ? 'disabled' : ''}>
+                ← Previous
+            </button>
+            <span class="pagination-info">
+                Page ${this.currentPage} of ${totalPages} (${this.filteredPlans.length} plans)
+            </span>
+            <button id="nextPageBtn" class="btn btn-outline btn-sm" ${this.currentPage === totalPages ? 'disabled' : ''}>
+                Next →
+            </button>
+        `;
+        
+        // Insert after the plan grid
+        const planGrid = document.getElementById('planGrid');
+        planGrid.parentNode.insertBefore(paginationDiv, planGrid.nextSibling);
+        
+        // Add event listeners
+        document.getElementById('prevPageBtn').addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.updateFilteredPlanGridDisplay();
             }
         });
         
-        this.updateSearchResultsInfo(visibleCount, planCards.length);
+        document.getElementById('nextPageBtn').addEventListener('click', () => {
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.updateFilteredPlanGridDisplay();
+            }
+        });
     }
     
     clearSearch() {
@@ -1265,7 +1424,10 @@ class SyncBenefitComparison {
         document.getElementById('metalLevelFilter').value = '';
         document.getElementById('networkFilter').value = '';
         document.getElementById('carrierFilter').value = '';
-        this.filterPlans();
+        this.filteredPlans = [...this.storedPlans];
+        this.currentPage = 1;
+        this.updatePlanGridDisplay();
+        this.updateSearchResultsInfo(this.storedPlans.length, this.storedPlans.length);
     }
     
     updateSearchResultsInfo(visibleCount, totalCount) {
@@ -1286,16 +1448,21 @@ class SyncBenefitComparison {
     }
 }
 
+// Toggle function for cost reference
+function toggleCostReference() {
+    const content = document.getElementById('costReferenceContent');
+    const toggle = document.getElementById('costReferenceToggle');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▲';
+    } else {
+        content.style.display = 'none';
+        toggle.textContent = '▼';
+    }
+}
+
 // Initialize the widget when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
-
-
-
-
-
-
-
-
-
