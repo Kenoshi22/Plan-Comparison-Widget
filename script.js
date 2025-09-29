@@ -84,10 +84,8 @@ class SyncBenefitComparison {
         document.getElementById('savePlan').addEventListener('click', () => this.saveCustomPlan());
         document.getElementById('cancelPlan').addEventListener('click', () => this.hideModal('customPlanModal'));
         
-        // Usage scenario events
-        document.getElementById('updateScenarioBtn').addEventListener('click', () => this.updateUsageScenario());
-        document.getElementById('performComparisonBtn').addEventListener('click', () => this.performComparison());
-        document.getElementById('resetAllBtn').addEventListener('click', () => this.resetAll());
+        // Reset event
+        document.getElementById('resetBtn').addEventListener('click', () => this.resetAll());
         
         // Medical bills events
         document.getElementById('addBillBtn').addEventListener('click', () => this.addMedicalBill());
@@ -97,6 +95,21 @@ class SyncBenefitComparison {
         
         // Recalculate event
         document.getElementById('recalculateBtn').addEventListener('click', () => this.performComparison());
+        
+        // Usage scenario events - add listeners to all usage input fields
+        const usageInputs = [
+            'primaryVisits', 'specialistVisits', 'urgentCareVisits', 'erVisits',
+            'inpatientVisits', 'outpatientVisits', 'basicImaging', 'advancedImaging',
+            'labTests', 'surgeryVisits', 'tier1Drugs', 'tier2Drugs', 'tier3Drugs',
+            'tier4Drugs', 'tier5Drugs', 'tier6Drugs'
+        ];
+        
+        usageInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', () => this.updateUsageScenario());
+            }
+        });
     }
     
     async loadExamplePlans() {
@@ -332,6 +345,12 @@ class SyncBenefitComparison {
         
         this.updateComparisonTable();
         this.updateMedicalBillsBreakdown();
+        
+        // Show the comparison results section
+        const comparisonResults = document.getElementById('comparisonResults');
+        if (comparisonResults) {
+            comparisonResults.style.display = 'block';
+        }
     }
     
     calculatePlanCosts(plan) {
@@ -685,8 +704,28 @@ class SyncBenefitComparison {
     }
     
     updateUsageScenario() {
-        // This would update the usage scenario from form inputs
-        console.log('Usage scenario updated');
+        // Update usage scenario from form inputs
+        this.usageScenario = {
+            primaryCareVisits: parseInt(document.getElementById('primaryVisits')?.value || 0),
+            specialistVisits: parseInt(document.getElementById('specialistVisits')?.value || 0),
+            urgentCareVisits: parseInt(document.getElementById('urgentCareVisits')?.value || 0),
+            emergencyRoomVisits: parseInt(document.getElementById('erVisits')?.value || 0),
+            ambulanceRides: 0, // Not in form
+            inpatientDays: parseInt(document.getElementById('inpatientVisits')?.value || 0),
+            outpatientVisits: parseInt(document.getElementById('outpatientVisits')?.value || 0),
+            basicImagingVisits: parseInt(document.getElementById('basicImaging')?.value || 0),
+            advancedImagingVisits: parseInt(document.getElementById('advancedImaging')?.value || 0),
+            labTests: parseInt(document.getElementById('labTests')?.value || 0),
+            ambulatoryProcedures: parseInt(document.getElementById('surgeryVisits')?.value || 0),
+            prescriptionTier1: parseInt(document.getElementById('tier1Drugs')?.value || 0),
+            prescriptionTier2: parseInt(document.getElementById('tier2Drugs')?.value || 0),
+            prescriptionTier3: parseInt(document.getElementById('tier3Drugs')?.value || 0),
+            prescriptionTier4: parseInt(document.getElementById('tier4Drugs')?.value || 0),
+            prescriptionTier5: parseInt(document.getElementById('tier5Drugs')?.value || 0),
+            prescriptionTier6: parseInt(document.getElementById('tier6Drugs')?.value || 0)
+        };
+        
+        console.log('Usage scenario updated:', this.usageScenario);
     }
     
     saveCustomPlan() {
@@ -1219,4 +1258,3 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
-
