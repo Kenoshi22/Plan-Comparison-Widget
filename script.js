@@ -1,4 +1,5 @@
 // Health Plan Comparison Widget - Simplified Version
+// Health Plan Comparison Widget - Simplified Version
 class SyncBenefitComparison {
     constructor() {
         this.selectedPlans = [];
@@ -24,6 +25,7 @@ class SyncBenefitComparison {
         };
         this.medicalBills = [];
         this.storedPlans = [];
+        this.customPlans = [];
         this.serviceCosts = {
             'Primary Care Visit': 120,
             'Specialist Visit': 250,
@@ -44,24 +46,42 @@ class SyncBenefitComparison {
             'Tier 6 - Specialty Drugs': 600
         };
         
+        // Zoho GitHub Manager integration
+        this.zohoManager = null;
+        this.syncStatus = {
+            lastSync: null,
+            isOnline: navigator.onLine,
+            isSyncing: false,
+            error: null
+        };
+        
         this.init();
     }
-    
+
     init() {
         this.bindEvents();
+        this.setupZohoIntegration();
         this.loadExamplePlans();
+        this.loadCustomPlans();
     }
-    
+
     bindEvents() {
         // Plan selection events
-        document.getElementById('addCustomPlanBtn').addEventListener('click', () => this.showModal('customPlanModal'));
-        document.getElementById('uploadPDFBtn').addEventListener('click', () => this.showModal('uploadPDFModal'));
+        document.getElementById('addPlanBtn').addEventListener('click', () => this.showModal('customPlanModal'));
         document.getElementById('loadSamplePlansBtn').addEventListener('click', () => this.loadSamplePlans());
+        document.getElementById('configureGitHubBtn').addEventListener('click', () => this.showModal('githubConfigModal'));
+        document.getElementById('syncPlansBtn').addEventListener('click', () => this.syncPlans());
+        
+        // Search and filter events
+        document.getElementById('planSearchInput').addEventListener('input', () => this.filterPlans());
+        document.getElementById('clearSearchBtn').addEventListener('click', () => this.clearSearch());
+        document.getElementById('metalLevelFilter').addEventListener('change', () => this.filterPlans());
+        document.getElementById('networkFilter').addEventListener('change', () => this.filterPlans());
+        document.getElementById('carrierFilter').addEventListener('change', () => this.filterPlans());
         
         // Modal events
-        document.getElementById('saveCustomPlanBtn').addEventListener('click', () => this.saveCustomPlan());
-        document.getElementById('cancelCustomPlanBtn').addEventListener('click', () => this.hideModal('customPlanModal'));
-        document.getElementById('cancelUploadBtn').addEventListener('click', () => this.hideModal('uploadPDFModal'));
+        document.getElementById('savePlan').addEventListener('click', () => this.saveCustomPlan());
+        document.getElementById('cancelPlan').addEventListener('click', () => this.hideModal('customPlanModal'));
         
         // Usage scenario events
         document.getElementById('updateScenarioBtn').addEventListener('click', () => this.updateUsageScenario());
@@ -727,8 +747,8 @@ class SyncBenefitComparison {
     removeMedicalBill(billId) {
         this.medicalBills = this.medicalBills.filter(bill => bill.id !== billId);
         this.displayMedicalBills();
-        this.performComparison();
-    }
+            this.performComparison();
+        }
     
     loadSamplePlans() {
         // Clear existing plans first
@@ -778,8 +798,482 @@ class SyncBenefitComparison {
     }
     
     saveCustomPlan() {
-        // This would save a custom plan
-        console.log('Custom plan saved');
+        // Get form data
+        const planName = document.getElementById('planName').value;
+        const planType = document.getElementById('planType').value;
+        const annualDeductible = parseFloat(document.getElementById('annualDeductible').value) || 0;
+        const annualOOPMax = parseFloat(document.getElementById('annualOOPMax').value) || 0;
+        const familyDeductible = parseFloat(document.getElementById('familyDeductible').value) || 0;
+        const familyOOPMax = parseFloat(document.getElementById('familyOOPMax').value) || 0;
+        const planYear = parseInt(document.getElementById('planYear').value) || 2025;
+        const carrier = document.getElementById('carrier').value;
+        const network = document.getElementById('network').value;
+        const metalLevel = document.getElementById('metalLevel').value;
+        const hsa = document.getElementById('hsa').checked;
+        const productType = document.getElementById('productType').value;
+        
+        if (!planName || !planType) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        
+        // Create plan object
+        const plan = {
+            name: planName,
+            type: planType,
+            annualDeductible: annualDeductible,
+            annualOOPMax: annualOOPMax,
+            familyDeductible: familyDeductible,
+            familyOOPMax: familyOOPMax,
+            planYear: planYear,
+            carrier: carrier,
+            network: network,
+            metalLevel: metalLevel,
+            hsa: hsa,
+            productType: productType,
+            benefits: this.getBenefitsFromForm(),
+            prescriptionBenefits: this.getPrescriptionBenefitsFromForm(),
+            premium: 0,
+            isCustom: true
+        };
+        
+        // Save via Zoho or localStorage
+        this.saveCustomPlanToZoho(plan);
+        
+        // Close modal and clear form
+        this.hideModal('customPlanModal');
+        this.clearCustomPlanForm();
+    }
+    
+    getBenefitsFromForm() {
+        // This would extract benefits from the form
+        // For now, return default structure
+        return {
+            primaryCare: { type: 'Copay', amount: 0, percentage: 0 },
+            specialistVisit: { type: 'Copay', amount: 0, percentage: 0 },
+            urgentCare: { type: 'Copay', amount: 0, percentage: 0 },
+            emergencyRoom: { type: 'Copay', amount: 0, percentage: 0 },
+            ambulance: { type: 'Copay', amount: 0, percentage: 0 },
+            inpatient: { type: 'Copay', amount: 0, percentage: 0 },
+            outpatient: { type: 'Copay', amount: 0, percentage: 0 },
+            basicImaging: { type: 'Copay', amount: 0, percentage: 0 },
+            advancedImaging: { type: 'Copay', amount: 0, percentage: 0 },
+            labWork: { type: 'Copay', amount: 0, percentage: 0 },
+            ambulatoryProcedures: { type: 'Copay', amount: 0, percentage: 0 }
+        };
+    }
+    
+    getPrescriptionBenefitsFromForm() {
+        // This would extract prescription benefits from the form
+        // For now, return default structure
+        return {
+            tier1: { type: 'Copay', amount: 0, percentage: 0 },
+            tier2: { type: 'Copay', amount: 0, percentage: 0 },
+            tier3: { type: 'Copay', amount: 0, percentage: 0 },
+            tier4: { type: 'Copay', amount: 0, percentage: 0 },
+            tier5: { type: 'Copay', amount: 0, percentage: 0 },
+            tier6: { type: 'Copay', amount: 0, percentage: 0 }
+        };
+    }
+    
+    clearCustomPlanForm() {
+        document.getElementById('planName').value = '';
+        document.getElementById('planType').value = '';
+        document.getElementById('annualDeductible').value = '';
+        document.getElementById('annualOOPMax').value = '';
+        document.getElementById('familyDeductible').value = '';
+        document.getElementById('familyOOPMax').value = '';
+        document.getElementById('planYear').value = '2025';
+        document.getElementById('carrier').value = '';
+        document.getElementById('network').value = '';
+        document.getElementById('metalLevel').value = '';
+        document.getElementById('hsa').checked = false;
+        document.getElementById('productType').value = '';
+    }
+    
+    // Zoho Integration Methods
+    setupZohoIntegration() {
+        // Initialize Zoho GitHub Manager if available
+        if (window.zohoGitHubManager) {
+            this.zohoManager = window.zohoGitHubManager;
+        }
+        
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            this.syncStatus.isOnline = true;
+            this.updateSyncStatus();
+            this.syncPlans();
+        });
+        
+        window.addEventListener('offline', () => {
+            this.syncStatus.isOnline = false;
+            this.updateSyncStatus();
+        });
+        
+        // Auto-sync every 5 minutes when online
+        setInterval(() => {
+            if (this.syncStatus.isOnline && this.zohoManager) {
+                this.syncPlans();
+            }
+        }, 300000); // 5 minutes
+    }
+    
+    async loadCustomPlans() {
+        if (!this.zohoManager) {
+            console.log('Zoho GitHub Manager not available, loading from localStorage');
+            this.loadCustomPlansFromLocalStorage();
+            return;
+        }
+        
+        try {
+            this.syncStatus.isSyncing = true;
+            this.updateSyncStatus();
+            
+            const result = await this.zohoManager.apiLoadPlans();
+            if (result.success) {
+                // Filter custom plans from the result
+                this.customPlans = result.plans.filter(plan => plan.isCustom);
+                this.updatePlanGrid();
+                this.syncStatus.lastSync = new Date();
+                this.syncStatus.error = null;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            console.error('Error loading custom plans from Zoho:', error);
+            this.syncStatus.error = error.message;
+            // Fallback to localStorage
+            this.loadCustomPlansFromLocalStorage();
+        } finally {
+            this.syncStatus.isSyncing = false;
+            this.updateSyncStatus();
+        }
+    }
+    
+    async saveCustomPlanToZoho(plan) {
+        if (!this.zohoManager) {
+            console.log('Zoho GitHub Manager not available, saving to localStorage');
+            this.saveCustomPlanToLocalStorage(plan);
+            return;
+        }
+        
+        try {
+            this.syncStatus.isSyncing = true;
+            this.updateSyncStatus();
+            
+            // Add plan to custom plans
+            plan.id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            plan.isCustom = true;
+            plan.createdAt = new Date().toISOString();
+            plan.createdBy = this.getCurrentUser();
+            
+            // Save via Zoho manager
+            const result = await this.zohoManager.apiSavePlan(plan);
+            
+            if (result.success) {
+                this.customPlans.push(plan);
+                this.updatePlanGrid();
+                this.syncStatus.lastSync = new Date();
+                this.syncStatus.error = null;
+                console.log('Plan saved via Zoho successfully');
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            console.error('Error saving plan via Zoho:', error);
+            this.syncStatus.error = error.message;
+            // Fallback to localStorage
+            this.saveCustomPlanToLocalStorage(plan);
+        } finally {
+            this.syncStatus.isSyncing = false;
+            this.updateSyncStatus();
+        }
+    }
+    
+    async syncPlans() {
+        if (!this.githubConfig.token || !this.syncStatus.isOnline) {
+            return;
+        }
+        
+        try {
+            this.syncStatus.isSyncing = true;
+            this.updateSyncStatus();
+            
+            const plans = await this.fetchPlansFromGitHub('custom-plans.json');
+            if (plans) {
+                this.customPlans = plans;
+                this.updatePlanGrid();
+                this.syncStatus.lastSync = new Date();
+                this.syncStatus.error = null;
+            }
+        } catch (error) {
+            console.error('Error syncing plans:', error);
+            this.syncStatus.error = error.message;
+        } finally {
+            this.syncStatus.isSyncing = false;
+            this.updateSyncStatus();
+        }
+    }
+    
+    async fetchPlansFromGitHub(filename) {
+        const url = `https://api.github.com/repos/${this.githubConfig.owner}/${this.githubConfig.repo}/contents/plans/${filename}`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `token ${this.githubConfig.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                // File doesn't exist yet, return empty array
+                return [];
+            }
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const content = atob(data.content.replace(/\n/g, ''));
+        return JSON.parse(content);
+    }
+    
+    async savePlansToGitHub(filename, plans) {
+        const url = `https://api.github.com/repos/${this.githubConfig.owner}/${this.githubConfig.repo}/contents/plans/${filename}`;
+        
+        // First, get the current file to get the SHA
+        let sha = null;
+        try {
+            const getResponse = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${this.githubConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            }
+        } catch (error) {
+            // File doesn't exist yet, that's okay
+        }
+        
+        // Prepare the content
+        const content = btoa(JSON.stringify(plans, null, 2));
+        
+        const body = {
+            message: `Update ${filename} - ${new Date().toISOString()}`,
+            content: content,
+            branch: this.githubConfig.branch
+        };
+        
+        if (sha) {
+            body.sha = sha;
+        }
+        
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${this.githubConfig.token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+        
+        return await response.json();
+    }
+    
+    loadCustomPlansFromLocalStorage() {
+        const stored = localStorage.getItem('customPlans');
+        if (stored) {
+            this.customPlans = JSON.parse(stored);
+            this.updatePlanGrid();
+        }
+    }
+    
+    saveCustomPlanToLocalStorage(plan) {
+        this.customPlans.push(plan);
+        localStorage.setItem('customPlans', JSON.stringify(this.customPlans));
+        this.updatePlanGrid();
+    }
+    
+    updatePlanGrid() {
+        // Clear existing custom plans from grid
+        document.querySelectorAll('.plan-card[data-plan-id^="custom_"]').forEach(card => card.remove());
+        
+        // Add all custom plans to grid
+        this.customPlans.forEach(plan => {
+            this.addPlanToGrid(plan);
+        });
+    }
+    
+    getCurrentUser() {
+        // In a real implementation, this would get the current user
+        // For now, we'll use a simple identifier
+        return localStorage.getItem('currentUser') || 'Unknown User';
+    }
+    
+    updateSyncStatus() {
+        const statusElement = document.getElementById('syncStatus');
+        if (statusElement) {
+            let statusText = '';
+            if (this.syncStatus.isSyncing) {
+                statusText = '🔄 Syncing...';
+            } else if (this.syncStatus.error) {
+                statusText = `❌ Error: ${this.syncStatus.error}`;
+            } else if (this.syncStatus.lastSync) {
+                statusText = `✅ Last sync: ${this.syncStatus.lastSync.toLocaleTimeString()}`;
+            } else {
+                statusText = '⚪ Not synced';
+            }
+            
+            if (!this.syncStatus.isOnline) {
+                statusText += ' (Offline)';
+            }
+            
+            statusElement.textContent = statusText;
+        }
+    }
+    
+    // Configuration methods
+    setGitHubConfig(owner, repo, token) {
+        this.githubConfig.owner = owner;
+        this.githubConfig.repo = repo;
+        this.githubConfig.token = token;
+        
+        // Save token to localStorage
+        localStorage.setItem('githubToken', token);
+        localStorage.setItem('githubOwner', owner);
+        localStorage.setItem('githubRepo', repo);
+        
+        // Load custom plans from GitHub
+        this.loadCustomPlans();
+    }
+    
+    loadGitHubConfig() {
+        // First try to load from config.js (secure method)
+        if (window.GitHubConfig) {
+            this.githubConfig.owner = window.GitHubConfig.owner || this.githubConfig.owner;
+            this.githubConfig.repo = window.GitHubConfig.repo || this.githubConfig.repo;
+            this.githubConfig.token = window.GitHubConfig.token || this.githubConfig.token;
+            this.githubConfig.branch = window.GitHubConfig.branch || this.githubConfig.branch;
+        }
+        
+        // Fallback to localStorage (less secure but user-configured)
+        const token = localStorage.getItem('githubToken');
+        const owner = localStorage.getItem('githubOwner');
+        const repo = localStorage.getItem('githubRepo');
+        
+        if (token && owner && repo && !this.githubConfig.token) {
+            this.githubConfig.token = token;
+            this.githubConfig.owner = owner;
+            this.githubConfig.repo = repo;
+        }
+    }
+    
+    saveGitHubConfig() {
+        const owner = document.getElementById('githubOwner').value;
+        const repo = document.getElementById('githubRepo').value;
+        const token = document.getElementById('githubToken').value;
+        const currentUser = document.getElementById('currentUser').value;
+        
+        if (!owner || !repo || !token || !currentUser) {
+            alert('Please fill in all fields.');
+            return;
+        }
+        
+        // Save configuration
+        this.setGitHubConfig(owner, repo, token);
+        localStorage.setItem('currentUser', currentUser);
+        
+        // Close modal
+        this.hideModal('githubConfigModal');
+        
+        // Show success message
+        alert('GitHub configuration saved! Plans will now sync automatically.');
+    }
+    
+    // Search and Filter Methods
+    filterPlans() {
+        const searchTerm = document.getElementById('planSearchInput').value.toLowerCase();
+        const metalLevel = document.getElementById('metalLevelFilter').value;
+        const network = document.getElementById('networkFilter').value;
+        const carrier = document.getElementById('carrierFilter').value;
+        
+        const planCards = document.querySelectorAll('.plan-card');
+        let visibleCount = 0;
+        
+        planCards.forEach(card => {
+            const planId = card.getAttribute('data-plan-id');
+            const plan = this.storedPlans.find(p => p.id === planId);
+            
+            if (!plan) return;
+            
+            let show = true;
+            
+            // Text search
+            if (searchTerm) {
+                const searchableText = `${plan.name} ${plan.carrier} ${plan.network} ${plan.metalLevel}`.toLowerCase();
+                if (!searchableText.includes(searchTerm)) {
+                    show = false;
+                }
+            }
+            
+            // Metal level filter
+            if (metalLevel && plan.metalLevel !== metalLevel) {
+                show = false;
+            }
+            
+            // Network filter
+            if (network && plan.network !== network) {
+                show = false;
+            }
+            
+            // Carrier filter
+            if (carrier && plan.carrier !== carrier) {
+                show = false;
+            }
+            
+            if (show) {
+                card.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+        
+        this.updateSearchResultsInfo(visibleCount, planCards.length);
+    }
+    
+    clearSearch() {
+        document.getElementById('planSearchInput').value = '';
+        document.getElementById('metalLevelFilter').value = '';
+        document.getElementById('networkFilter').value = '';
+        document.getElementById('carrierFilter').value = '';
+        this.filterPlans();
+    }
+    
+    updateSearchResultsInfo(visibleCount, totalCount) {
+        let infoElement = document.getElementById('searchResultsInfo');
+        if (!infoElement) {
+            infoElement = document.createElement('div');
+            infoElement.id = 'searchResultsInfo';
+            infoElement.className = 'search-results-info';
+            document.querySelector('.plan-search-section').appendChild(infoElement);
+        }
+        
+        if (visibleCount === totalCount) {
+            infoElement.style.display = 'none';
+        } else {
+            infoElement.style.display = 'block';
+            infoElement.textContent = `Showing ${visibleCount} of ${totalCount} plans`;
+        }
     }
 }
 
@@ -787,5 +1281,3 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
-
-
