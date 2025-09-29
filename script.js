@@ -115,16 +115,37 @@ class SyncBenefitComparison {
     async loadExamplePlans() {
         console.log('Loading plans from all-plans.json...');
         
-        try {
-            // Try to load from the plans directory
-            const response = await fetch('./Plan-Comparison-Widget/plans/all-plans.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        // Try multiple possible paths for the JSON file
+        const possiblePaths = [
+            'https://kenoshi22.github.io/Plan-Comparison-Widget/plans/all-plans.json',
+            'https://kenoshi22.github.io/Health_Plan_Comparison/plans/all-plans.json',
+            'https://kenoshi22.github.io/plans/all-plans.json',
+            './plans/all-plans.json',
+            '../plans/all-plans.json',
+            'plans/all-plans.json'
+        ];
+        
+        let plans = null;
+        let lastError = null;
+        
+        for (const path of possiblePaths) {
+            try {
+                console.log(`Trying to load from: ${path}`);
+                const response = await fetch(path);
+                if (response.ok) {
+                    plans = await response.json();
+                    console.log(`Successfully loaded plans from: ${path}`, plans.length);
+                    break;
+                } else {
+                    console.log(`Failed to load from ${path}: ${response.status}`);
+                }
+            } catch (error) {
+                console.log(`Error loading from ${path}:`, error.message);
+                lastError = error;
             }
-            
-            const plans = await response.json();
-            console.log('Loaded plans from JSON file:', plans.length);
-            
+        }
+        
+        if (plans && Array.isArray(plans)) {
             // Add all plans to the stored plans and grid
             plans.forEach(plan => {
                 // Ensure the plan has the required structure
@@ -142,9 +163,8 @@ class SyncBenefitComparison {
             });
             
             console.log('Successfully loaded', this.storedPlans.length, 'plans');
-            
-        } catch (error) {
-            console.error('Error loading plans from JSON file:', error);
+        } else {
+            console.error('Error loading plans from all paths:', lastError);
             console.log('Falling back to hardcoded example plans...');
             
             // Fallback to hardcoded example plans if JSON loading fails
@@ -1275,6 +1295,7 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
+
 
 
 
