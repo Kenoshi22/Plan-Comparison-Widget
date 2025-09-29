@@ -389,10 +389,10 @@ class SyncBenefitComparison {
             
             this.selectedPlans.forEach(plan => {
                 const premiumGroup = document.createElement('div');
-                premiumGroup.className = 'premium-input-group';
+                premiumGroup.className = 'premium-display-group';
                 premiumGroup.innerHTML = `
                     <div class="premium-plan-name">${plan.name}</div>
-                    <input type="number" class="premium-input" data-plan-id="${plan.id}" placeholder="Enter monthly premium ($)" min="0" step="0.01">
+                    <div class="premium-display">$${(plan.premium / 12).toFixed(2)}/month</div>
                 `;
                 premiumsGrid.appendChild(premiumGroup);
             });
@@ -402,39 +402,9 @@ class SyncBenefitComparison {
     }
     
     savePremiums() {
-        const premiumInputs = document.querySelectorAll('.premium-input');
-        let allFilled = true;
-        let hasValidPremiums = false;
-        
-        premiumInputs.forEach(input => {
-            const planId = input.dataset.planId;
-            const monthlyPremium = parseFloat(input.value) || 0;
-            const annualPremium = monthlyPremium * 12;
-            
-            const plan = this.selectedPlans.find(p => p.id === planId);
-            if (plan) {
-                plan.premium = annualPremium;
-                if (monthlyPremium > 0) {
-                    hasValidPremiums = true;
-                }
-            }
-            
-            if (monthlyPremium === 0) {
-                allFilled = false;
-            }
-        });
-        
-        if (!allFilled) {
-            alert('Please enter monthly premiums for all selected plans.');
-            return;
-        }
-        
-        if (!hasValidPremiums) {
-            alert('Please enter valid monthly premiums (greater than $0) for at least one plan.');
-            return;
-        }
-        
-        console.log('Premiums saved:', this.selectedPlans.map(p => ({ name: p.name, monthly: p.premium/12, annual: p.premium })));
+        // Since we're using the plan's existing premium data, we don't need to validate inputs
+        // Just proceed with the comparison using the plan's current premium values
+        console.log('Using existing premium data:', this.selectedPlans.map(p => ({ name: p.name, monthly: p.premium/12, annual: p.premium })));
         this.performComparison();
         
         // Scroll to the calculation section
