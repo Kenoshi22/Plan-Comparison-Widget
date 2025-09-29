@@ -28,38 +28,42 @@
 
         <!-- Main Content -->
         <div class="widget-content">
+            <!-- Plan Search Section -->
+            <div class="section plan-search-section">
+                <h2>Search & Filter Plans</h2>
+                <p class="section-description">Search and filter through available health insurance plans to find the ones you want to compare.</p>
+                <div class="search-container">
+                    <input type="text" id="planSearchInput" placeholder="Search plans by name, carrier, network, or metal level..." class="search-input">
+                    <button id="clearSearchBtn" class="btn btn-outline btn-sm">Clear</button>
+                </div>
+                <div class="filter-container">
+                    <select id="metalLevelFilter" class="filter-select">
+                        <option value="">All Metal Levels</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Bronze">Bronze</option>
+                    </select>
+                    <select id="networkFilter" class="filter-select">
+                        <option value="">All Networks</option>
+                        <option value="BlueOptions">BlueOptions</option>
+                        <option value="BlueSelect">BlueSelect</option>
+                        <option value="BlueCare">BlueCare</option>
+                        <option value="MyBlue">MyBlue</option>
+                    </select>
+                    <select id="carrierFilter" class="filter-select">
+                        <option value="">All Carriers</option>
+                        <option value="Florida Blue">Florida Blue</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Plan Selection Section -->
             <div class="section plan-selection">
                 <h2>Select Plans to Compare</h2>
                 <p class="section-description">Choose up to 6 health insurance plans to compare. Click on a plan to select it for comparison.</p>
                 <div class="plan-grid" id="planGrid">
                     <!-- Plans will be dynamically loaded here -->
-                </div>
-                <div class="plan-search-section">
-                    <div class="search-container">
-                        <input type="text" id="planSearchInput" placeholder="Search plans by name, carrier, network, or metal level..." class="search-input">
-                        <button id="clearSearchBtn" class="btn btn-outline btn-sm">Clear</button>
-                    </div>
-                    <div class="filter-container">
-                        <select id="metalLevelFilter" class="filter-select">
-                            <option value="">All Metal Levels</option>
-                            <option value="Platinum">Platinum</option>
-                            <option value="Gold">Gold</option>
-                            <option value="Silver">Silver</option>
-                            <option value="Bronze">Bronze</option>
-                        </select>
-                        <select id="networkFilter" class="filter-select">
-                            <option value="">All Networks</option>
-                            <option value="BlueOptions">BlueOptions</option>
-                            <option value="BlueSelect">BlueSelect</option>
-                            <option value="BlueCare">BlueCare</option>
-                            <option value="MyBlue">MyBlue</option>
-                        </select>
-                        <select id="carrierFilter" class="filter-select">
-                            <option value="">All Carriers</option>
-                            <option value="Florida Blue">Florida Blue</option>
-                        </select>
-                    </div>
                 </div>
                 
                 <div class="add-plan-section">
@@ -135,56 +139,6 @@
                 </div>
             </div>
 
-            <!-- Cost Reference Section -->
-            <div class="section cost-reference">
-                <h2>Service Cost Reference</h2>
-                <p class="section-description">The following flat amounts are used for all calculations. These represent typical costs for each service type.</p>
-                <div class="cost-reference-grid">
-                    <div class="cost-category">
-                        <h3>Primary & Specialist Care</h3>
-                        <ul>
-                            <li>Family Physician Office Visit: <strong>$120</strong></li>
-                            <li>Family Physician Virtual Visit: <strong>$150</strong></li>
-                            <li>Specialist Visit: <strong>$250</strong></li>
-                        </ul>
-                    </div>
-                    <div class="cost-category">
-                        <h3>Urgent & Emergency Care</h3>
-                        <ul>
-                            <li>Urgent Care Visit: <strong>$450</strong></li>
-                            <li>Emergency Room Visit: <strong>$3,000</strong></li>
-                        </ul>
-                    </div>
-                    <div class="cost-category">
-                        <h3>Surgical & Hospital Services</h3>
-                        <ul>
-                            <li>Ambulatory Surgery Center (ASC): <strong>$4,500</strong></li>
-                            <li>Inpatient Hospital Stay: <strong>$2,000 per day</strong></li>
-                            <li>Outpatient Hospital Visit: <strong>$3,000</strong></li>
-                        </ul>
-                    </div>
-                    <div class="cost-category">
-                        <h3>Diagnostic & Imaging Services</h3>
-                        <ul>
-                            <li>Independent Clinical Lab: <strong>$100</strong></li>
-                            <li>Diagnostic Services (EKG, labs): <strong>$500</strong></li>
-                            <li>Imaging Services (MRI, CT): <strong>$1,500</strong></li>
-                        </ul>
-                    </div>
-                    <div class="cost-category">
-                        <h3>Prescription Medications (Self-Pay)</h3>
-                        <ul>
-                            <li>Prescription Tier 1: <strong>$15</strong></li>
-                            <li>Prescription Tier 2: <strong>$50</strong></li>
-                            <li>Prescription Tier 3: <strong>$100</strong></li>
-                            <li>Prescription Tier 4: <strong>$200</strong></li>
-                            <li>Prescription Tier 5: <strong>$400</strong></li>
-                            <li>Prescription Tier 6: <strong>$600</strong></li>
-                            <li>Prescription Tier 7: <strong>$800</strong></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
 
             <!-- Usage Scenarios Section -->
             <div class="section usage-scenarios">
@@ -362,6 +316,62 @@
                             <span class="btn-icon">📊</span>
                             Export to Excel
                         </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cost Reference Section (Collapsible) -->
+            <div class="section cost-reference-collapsible">
+                <div class="cost-reference-header" onclick="toggleCostReference()">
+                    <h2>Service Cost Reference</h2>
+                    <span class="cost-reference-toggle" id="costReferenceToggle">▼</span>
+                </div>
+                <div class="cost-reference-content" id="costReferenceContent" style="display: none;">
+                    <p class="section-description">The following flat amounts are used for all calculations. These represent typical costs for each service type.</p>
+                    <div class="cost-reference-grid">
+                        <div class="cost-category">
+                            <h3>Primary & Specialist Care</h3>
+                            <ul>
+                                <li>Family Physician Office Visit: <strong>$120</strong></li>
+                                <li>Family Physician Virtual Visit: <strong>$150</strong></li>
+                                <li>Specialist Visit: <strong>$250</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Urgent & Emergency Care</h3>
+                            <ul>
+                                <li>Urgent Care Visit: <strong>$450</strong></li>
+                                <li>Emergency Room Visit: <strong>$3,000</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Surgical & Hospital Services</h3>
+                            <ul>
+                                <li>Ambulatory Surgery Center (ASC): <strong>$4,500</strong></li>
+                                <li>Inpatient Hospital Stay: <strong>$2,000 per day</strong></li>
+                                <li>Outpatient Hospital Visit: <strong>$3,000</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Diagnostic & Imaging Services</h3>
+                            <ul>
+                                <li>Independent Clinical Lab: <strong>$100</strong></li>
+                                <li>Diagnostic Services (EKG, labs): <strong>$500</strong></li>
+                                <li>Imaging Services (MRI, CT): <strong>$1,500</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Prescription Medications (Self-Pay)</h3>
+                            <ul>
+                                <li>Prescription Tier 1: <strong>$15</strong></li>
+                                <li>Prescription Tier 2: <strong>$50</strong></li>
+                                <li>Prescription Tier 3: <strong>$100</strong></li>
+                                <li>Prescription Tier 4: <strong>$200</strong></li>
+                                <li>Prescription Tier 5: <strong>$400</strong></li>
+                                <li>Prescription Tier 6: <strong>$600</strong></li>
+                                <li>Prescription Tier 7: <strong>$800</strong></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
