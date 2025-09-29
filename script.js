@@ -118,11 +118,6 @@ class SyncBenefitComparison {
         // Try multiple possible paths for the JSON file
         const possiblePaths = [
             'https://kenoshi22.github.io/Plan-Comparison-Widget/plans/all-plans.json',
-            'https://kenoshi22.github.io/Health_Plan_Comparison/plans/all-plans.json',
-            'https://kenoshi22.github.io/plans/all-plans.json',
-            './plans/all-plans.json',
-            '../plans/all-plans.json',
-            'plans/all-plans.json'
         ];
         
         let plans = null;
@@ -1295,6 +1290,7 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
+
 
 
 
