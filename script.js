@@ -1,5 +1,3 @@
-// Health Plan Comparison Widget - Simplified Version
-// Health Plan Comparison Widget - Simplified Version
 class SyncBenefitComparison {
     constructor() {
         this.selectedPlans = [];
@@ -46,21 +44,22 @@ class SyncBenefitComparison {
             'Tier 6 - Specialty Drugs': 600
         };
         
-        // Zoho GitHub Manager integration
-        this.zohoManager = null;
-        this.syncStatus = {
-            lastSync: null,
-            isOnline: navigator.onLine,
-            isSyncing: false,
-            error: null
+        // GitHub API configuration for saving to plans folder
+        this.githubConfig = {
+            owner: '', // Your GitHub username/organization
+            repo: 'Health_Plan_Comparison', // Your repository name
+            token: '', // GitHub personal access token
+            branch: 'main' // Default branch
         };
+        
+        // Load GitHub config from localStorage or environment
+        this.loadGitHubConfig();
         
         this.init();
     }
 
     init() {
         this.bindEvents();
-        this.setupZohoIntegration();
         this.loadExamplePlans();
         this.loadCustomPlans();
     }
@@ -69,8 +68,6 @@ class SyncBenefitComparison {
         // Plan selection events
         document.getElementById('addPlanBtn').addEventListener('click', () => this.showModal('customPlanModal'));
         document.getElementById('loadSamplePlansBtn').addEventListener('click', () => this.loadSamplePlans());
-        document.getElementById('configureGitHubBtn').addEventListener('click', () => this.showModal('githubConfigModal'));
-        document.getElementById('syncPlansBtn').addEventListener('click', () => this.syncPlans());
         
         // Search and filter events
         document.getElementById('planSearchInput').addEventListener('input', () => this.filterPlans());
@@ -837,8 +834,8 @@ class SyncBenefitComparison {
             isCustom: true
         };
         
-        // Save via Zoho or localStorage
-        this.saveCustomPlanToZoho(plan);
+        // Save via JSON file storage
+        this.saveCustomPlanToFile(plan);
         
         // Close modal and clear form
         this.hideModal('customPlanModal');
@@ -891,273 +888,75 @@ class SyncBenefitComparison {
         document.getElementById('productType').value = '';
     }
     
-    // Zoho Integration Methods
-    setupZohoIntegration() {
-        // Initialize Zoho GitHub Manager if available
-        if (window.zohoGitHubManager) {
-            this.zohoManager = window.zohoGitHubManager;
-        }
-        
-        // Listen for online/offline events
-        window.addEventListener('online', () => {
-            this.syncStatus.isOnline = true;
-            this.updateSyncStatus();
-            this.syncPlans();
-        });
-        
-        window.addEventListener('offline', () => {
-            this.syncStatus.isOnline = false;
-            this.updateSyncStatus();
-        });
-        
-        // Auto-sync every 5 minutes when online
-        setInterval(() => {
-            if (this.syncStatus.isOnline && this.zohoManager) {
-                this.syncPlans();
-            }
-        }, 300000); // 5 minutes
-    }
-    
-    async loadCustomPlans() {
-        if (!this.zohoManager) {
-            console.log('Zoho GitHub Manager not available, loading from localStorage');
-            this.loadCustomPlansFromLocalStorage();
-            return;
-        }
-        
+    // Direct JSON File Storage Methods
+    async saveCustomPlanToFile(plan) {
         try {
-            this.syncStatus.isSyncing = true;
-            this.updateSyncStatus();
-            
-            const result = await this.zohoManager.apiLoadPlans();
-            if (result.success) {
-                // Filter custom plans from the result
-                this.customPlans = result.plans.filter(plan => plan.isCustom);
-                this.updatePlanGrid();
-                this.syncStatus.lastSync = new Date();
-                this.syncStatus.error = null;
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (error) {
-            console.error('Error loading custom plans from Zoho:', error);
-            this.syncStatus.error = error.message;
-            // Fallback to localStorage
-            this.loadCustomPlansFromLocalStorage();
-        } finally {
-            this.syncStatus.isSyncing = false;
-            this.updateSyncStatus();
-        }
-    }
-    
-    async saveCustomPlanToZoho(plan) {
-        if (!this.zohoManager) {
-            console.log('Zoho GitHub Manager not available, saving to localStorage');
-            this.saveCustomPlanToLocalStorage(plan);
-            return;
-        }
-        
-        try {
-            this.syncStatus.isSyncing = true;
-            this.updateSyncStatus();
-            
-            // Add plan to custom plans
+            // Add plan to custom plans array
             plan.id = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             plan.isCustom = true;
             plan.createdAt = new Date().toISOString();
-            plan.createdBy = this.getCurrentUser();
             
-            // Save via Zoho manager
-            const result = await this.zohoManager.apiSavePlan(plan);
+            this.customPlans.push(plan);
             
-            if (result.success) {
-                this.customPlans.push(plan);
-                this.updatePlanGrid();
-                this.syncStatus.lastSync = new Date();
-                this.syncStatus.error = null;
-                console.log('Plan saved via Zoho successfully');
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (error) {
-            console.error('Error saving plan via Zoho:', error);
-            this.syncStatus.error = error.message;
-            // Fallback to localStorage
-            this.saveCustomPlanToLocalStorage(plan);
-        } finally {
-            this.syncStatus.isSyncing = false;
-            this.updateSyncStatus();
-        }
-    }
-    
-    async syncPlans() {
-        if (!this.githubConfig.token || !this.syncStatus.isOnline) {
-            return;
-        }
-        
-        try {
-            this.syncStatus.isSyncing = true;
-            this.updateSyncStatus();
+            // Save to localStorage for immediate use
+            localStorage.setItem('customPlans', JSON.stringify(this.customPlans));
             
-            const plans = await this.fetchPlansFromGitHub('custom-plans.json');
-            if (plans) {
-                this.customPlans = plans;
-                this.updatePlanGrid();
-                this.syncStatus.lastSync = new Date();
-                this.syncStatus.error = null;
-            }
-        } catch (error) {
-            console.error('Error syncing plans:', error);
-            this.syncStatus.error = error.message;
-        } finally {
-            this.syncStatus.isSyncing = false;
-            this.updateSyncStatus();
-        }
-    }
-    
-    async fetchPlansFromGitHub(filename) {
-        const url = `https://api.github.com/repos/${this.githubConfig.owner}/${this.githubConfig.repo}/contents/plans/${filename}`;
-        
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `token ${this.githubConfig.token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        
-        if (!response.ok) {
-            if (response.status === 404) {
-                // File doesn't exist yet, return empty array
-                return [];
-            }
-            throw new Error(`GitHub API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const content = atob(data.content.replace(/\n/g, ''));
-        return JSON.parse(content);
-    }
-    
-    async savePlansToGitHub(filename, plans) {
-        const url = `https://api.github.com/repos/${this.githubConfig.owner}/${this.githubConfig.repo}/contents/plans/${filename}`;
-        
-        // First, get the current file to get the SHA
-        let sha = null;
-        try {
-            const getResponse = await fetch(url, {
-                headers: {
-                    'Authorization': `token ${this.githubConfig.token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
+            // Write directly to JSON file
+            await this.writeToJsonFile();
             
-            if (getResponse.ok) {
-                const fileData = await getResponse.json();
-                sha = fileData.sha;
-            }
-        } catch (error) {
-            // File doesn't exist yet, that's okay
-        }
-        
-        // Prepare the content
-        const content = btoa(JSON.stringify(plans, null, 2));
-        
-        const body = {
-            message: `Update ${filename} - ${new Date().toISOString()}`,
-            content: content,
-            branch: this.githubConfig.branch
-        };
-        
-        if (sha) {
-            body.sha = sha;
-        }
-        
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${this.githubConfig.token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
-        }
-        
-        return await response.json();
-    }
-    
-    loadCustomPlansFromLocalStorage() {
-        const stored = localStorage.getItem('customPlans');
-        if (stored) {
-            this.customPlans = JSON.parse(stored);
+            // Update the plan grid
             this.updatePlanGrid();
+            
+            console.log('Plan saved successfully:', plan.name);
+            // Show a subtle notification instead of an alert
+            this.showNotification(`Plan "${plan.name}" saved successfully!`);
+            
+            // Notify parent window (Zoho widget) about successful save
+            window.parent.postMessage({
+                type: 'PLAN_SAVED',
+                planName: plan.name,
+                success: true
+            }, '*');
+            
+            return { success: true, plan: plan };
+        } catch (error) {
+            console.error('Error saving plan:', error);
+            alert(`Error saving plan: ${error.message}`);
+            return { success: false, error: error.message };
         }
     }
     
-    saveCustomPlanToLocalStorage(plan) {
-        this.customPlans.push(plan);
-        localStorage.setItem('customPlans', JSON.stringify(this.customPlans));
-        this.updatePlanGrid();
-    }
-    
-    updatePlanGrid() {
-        // Clear existing custom plans from grid
-        document.querySelectorAll('.plan-card[data-plan-id^="custom_"]').forEach(card => card.remove());
-        
-        // Add all custom plans to grid
-        this.customPlans.forEach(plan => {
-            this.addPlanToGrid(plan);
-        });
-    }
-    
-    getCurrentUser() {
-        // In a real implementation, this would get the current user
-        // For now, we'll use a simple identifier
-        return localStorage.getItem('currentUser') || 'Unknown User';
-    }
-    
-    updateSyncStatus() {
-        const statusElement = document.getElementById('syncStatus');
-        if (statusElement) {
-            let statusText = '';
-            if (this.syncStatus.isSyncing) {
-                statusText = '🔄 Syncing...';
-            } else if (this.syncStatus.error) {
-                statusText = `❌ Error: ${this.syncStatus.error}`;
-            } else if (this.syncStatus.lastSync) {
-                statusText = `✅ Last sync: ${this.syncStatus.lastSync.toLocaleTimeString()}`;
-            } else {
-                statusText = '⚪ Not synced';
-            }
-            
-            if (!this.syncStatus.isOnline) {
-                statusText += ' (Offline)';
-            }
-            
-            statusElement.textContent = statusText;
-        }
-    }
-    
-    // Configuration methods
-    setGitHubConfig(owner, repo, token) {
-        this.githubConfig.owner = owner;
-        this.githubConfig.repo = repo;
-        this.githubConfig.token = token;
-        
-        // Save token to localStorage
-        localStorage.setItem('githubToken', token);
-        localStorage.setItem('githubOwner', owner);
-        localStorage.setItem('githubRepo', repo);
-        
-        // Load custom plans from GitHub
-        this.loadCustomPlans();
-    }
-    
+    // Load GitHub configuration
     loadGitHubConfig() {
-        // First try to load from config.js (secure method)
+        // Listen for configuration from parent window (Zoho widget)
+        window.addEventListener('message', (event) => {
+            // Verify origin for security
+            if (event.origin !== window.location.origin && 
+                !event.origin.includes('zoho') && 
+                !event.origin.includes('localhost')) {
+                console.log('Ignoring message from untrusted origin:', event.origin);
+                return;
+            }
+            
+            if (event.data.type === 'GITHUB_CONFIG') {
+                console.log('Received GitHub config from parent window');
+                this.githubConfig = { ...this.githubConfig, ...event.data.config };
+                console.log('GitHub config updated:', {
+                    owner: this.githubConfig.owner,
+                    repo: this.githubConfig.repo,
+                    hasToken: !!this.githubConfig.token,
+                    branch: this.githubConfig.branch
+                });
+                
+                // Notify parent that config was received
+                window.parent.postMessage({
+                    type: 'CONFIG_RECEIVED',
+                    success: true
+                }, '*');
+            }
+        });
+        
+        // Try to load from config.js first (secure method)
         if (window.GitHubConfig) {
             this.githubConfig.owner = window.GitHubConfig.owner || this.githubConfig.owner;
             this.githubConfig.repo = window.GitHubConfig.repo || this.githubConfig.repo;
@@ -1169,35 +968,279 @@ class SyncBenefitComparison {
         const token = localStorage.getItem('githubToken');
         const owner = localStorage.getItem('githubOwner');
         const repo = localStorage.getItem('githubRepo');
+        const branch = localStorage.getItem('githubBranch');
         
         if (token && owner && repo && !this.githubConfig.token) {
             this.githubConfig.token = token;
             this.githubConfig.owner = owner;
             this.githubConfig.repo = repo;
+            this.githubConfig.branch = branch || 'main';
+        }
+        
+        console.log('GitHub config loaded:', {
+            owner: this.githubConfig.owner,
+            repo: this.githubConfig.repo,
+            hasToken: !!this.githubConfig.token,
+            branch: this.githubConfig.branch
+        });
+    }
+    
+    // Write directly to GitHub repository (background operation)
+    async writeToJsonFile() {
+        try {
+            // Check if GitHub config is available
+            if (!this.githubConfig.token || !this.githubConfig.owner || !this.githubConfig.repo) {
+                console.log('GitHub configuration not available, falling back to localStorage');
+                return await this.fallbackToLocalStorage();
+            }
+            
+            const plansData = {
+                lastUpdated: new Date().toISOString(),
+                plans: this.customPlans,
+                totalPlans: this.customPlans.length
+            };
+            
+            const jsonString = JSON.stringify(plansData, null, 2);
+            
+            // Save to GitHub repository
+            const result = await this.saveToGitHub('plans/custom-plans.json', jsonString);
+            
+            if (result.success) {
+                console.log('Custom plans saved to GitHub repository');
+                return { success: true, method: 'GitHub API' };
+            } else {
+                console.log('GitHub save failed, falling back to localStorage:', result.error);
+                return await this.fallbackToLocalStorage();
+            }
+            
+        } catch (error) {
+            console.error('Error writing to GitHub:', error);
+            return await this.fallbackToLocalStorage();
         }
     }
     
-    saveGitHubConfig() {
-        const owner = document.getElementById('githubOwner').value;
-        const repo = document.getElementById('githubRepo').value;
-        const token = document.getElementById('githubToken').value;
-        const currentUser = document.getElementById('currentUser').value;
-        
-        if (!owner || !repo || !token || !currentUser) {
-            alert('Please fill in all fields.');
-            return;
+    // Fallback method for localStorage
+    async fallbackToLocalStorage() {
+        try {
+            const plansData = {
+                lastUpdated: new Date().toISOString(),
+                plans: this.customPlans,
+                totalPlans: this.customPlans.length
+            };
+            
+            const jsonString = JSON.stringify(plansData, null, 2);
+            localStorage.setItem('customPlansJson', jsonString);
+            
+            console.log('Plans data saved to localStorage as fallback');
+            return { success: true, method: 'localStorage Fallback' };
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+            return { success: false, error: error.message };
         }
-        
-        // Save configuration
-        this.setGitHubConfig(owner, repo, token);
-        localStorage.setItem('currentUser', currentUser);
-        
-        // Close modal
-        this.hideModal('githubConfigModal');
-        
-        // Show success message
-        alert('GitHub configuration saved! Plans will now sync automatically.');
     }
+    
+    // Save file to GitHub repository
+    async saveToGitHub(filePath, content) {
+        try {
+            const url = `https://api.github.com/repos/${this.githubConfig.owner}/${this.githubConfig.repo}/contents/${filePath}`;
+            
+            // First, try to get the current file to get the SHA (for updates)
+            let sha = null;
+            try {
+                const getResponse = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${this.githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                }
+            } catch (error) {
+                // File doesn't exist yet, that's okay
+                console.log('File does not exist yet, will create new file');
+            }
+            
+            // Prepare the content (base64 encoded)
+            const contentBase64 = btoa(unescape(encodeURIComponent(content)));
+            
+            const body = {
+                message: `Update custom plans - ${new Date().toISOString()}`,
+                content: contentBase64,
+                branch: this.githubConfig.branch
+            };
+            
+            if (sha) {
+                body.sha = sha;
+            }
+            
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${this.githubConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('File saved to GitHub successfully:', result.commit.html_url);
+                return { success: true, commitUrl: result.commit.html_url };
+            } else {
+                const errorData = await response.json();
+                throw new Error(`GitHub API error: ${response.status} - ${errorData.message}`);
+            }
+            
+        } catch (error) {
+            console.error('Error saving to GitHub:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    loadCustomPlans() {
+        try {
+            // Try to load from GitHub first if config is available
+            if (this.githubConfig.token && this.githubConfig.owner && this.githubConfig.repo) {
+                this.loadPlansFromGitHub();
+            } else {
+                // Fallback to localStorage
+                this.loadPlansFromLocalStorage();
+            }
+        } catch (error) {
+            console.error('Error loading custom plans:', error);
+            this.customPlans = [];
+        }
+    }
+    
+    // Load plans from GitHub repository
+    async loadPlansFromGitHub() {
+        try {
+            const result = await this.fetchFromGitHub('plans/custom-plans.json');
+            if (result.success && result.data) {
+                const jsonData = JSON.parse(result.data);
+                if (jsonData && jsonData.plans) {
+                    this.customPlans = jsonData.plans;
+                    localStorage.setItem('customPlans', JSON.stringify(this.customPlans));
+                    this.updatePlanGrid();
+                    console.log('Loaded custom plans from GitHub:', this.customPlans.length);
+                    
+                    // Notify parent window about successful load
+                    window.parent.postMessage({
+                        type: 'PLAN_LOADED',
+                        count: this.customPlans.length,
+                        success: true
+                    }, '*');
+                    
+                    return;
+                }
+            }
+            // If GitHub load fails, fallback to localStorage
+            this.loadPlansFromLocalStorage();
+        } catch (error) {
+            console.error('Error loading from GitHub:', error);
+            this.loadPlansFromLocalStorage();
+        }
+    }
+    
+    // Load plans from localStorage
+    loadPlansFromLocalStorage() {
+        const stored = localStorage.getItem('customPlans');
+        if (stored) {
+            this.customPlans = JSON.parse(stored);
+            this.updatePlanGrid();
+            console.log('Loaded custom plans from localStorage:', this.customPlans.length);
+        }
+    }
+    
+    // Fetch file content from GitHub
+    async fetchFromGitHub(filePath) {
+        try {
+            const url = `https://api.github.com/repos/${this.githubConfig.owner}/${this.githubConfig.repo}/contents/${filePath}`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${this.githubConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const content = atob(data.content.replace(/\n/g, ''));
+                return { success: true, data: content };
+            } else if (response.status === 404) {
+                // File doesn't exist yet, return empty
+                return { success: true, data: null };
+            } else {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error fetching from GitHub:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    // Show subtle notification
+    showNotification(message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        `;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    
+    
+    
+    
+    
+    updatePlanGrid() {
+        // Clear existing custom plans from grid
+        document.querySelectorAll('.plan-card[data-plan-id^="custom_"]').forEach(card => card.remove());
+        
+        // Add all custom plans to grid
+        this.customPlans.forEach(plan => {
+            this.addPlanToGrid(plan);
+        });
+    }
+    
     
     // Search and Filter Methods
     filterPlans() {
