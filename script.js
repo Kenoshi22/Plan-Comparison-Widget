@@ -1014,7 +1014,7 @@ class SyncBenefitComparison {
     // Load plans from GitHub repository
     async loadPlansFromGitHub() {
         try {
-            const result = await this.fetchFromGitHub('plans/custom-plans.json');
+            const result = await this.fetchFromGitHub('plans/all-plans.json');
             if (result.success && result.data) {
                 const jsonData = JSON.parse(result.data);
                 if (jsonData && jsonData.plans) {
@@ -1219,3 +1219,4 @@ class SyncBenefitComparison {
 document.addEventListener('DOMContentLoaded', () => {
     window.syncWidget = new SyncBenefitComparison();
 });
+
