@@ -790,130 +790,120 @@ class SyncBenefitComparison {
         
         if (this.selectedPlans.length === 0) return;
         
-        // Create cards for each plan
+        // Create a table for benefits comparison
+        const table = document.createElement('table');
+        table.className = 'benefits-comparison-table';
+        
+        // Create header row
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>Benefit</th>';
         this.selectedPlans.forEach(plan => {
-            const planCard = document.createElement('div');
-            planCard.className = 'plan-benefit-card';
-            
-            // Plan header
-            const planHeader = document.createElement('div');
-            planHeader.className = 'plan-benefit-header';
-            planHeader.innerHTML = `
-                <h3>${plan.name}</h3>
-                <div class="plan-details">
-                    <span class="metal-level">${plan.metalLevel}</span>
-                    <span class="network">${plan.network}</span>
+            const th = document.createElement('th');
+            th.innerHTML = `
+                <div class="plan-header">
+                    <div class="plan-name">${plan.name}</div>
+                    <div class="plan-details">${plan.metalLevel} • ${plan.network}</div>
                 </div>
             `;
-            planCard.appendChild(planHeader);
+            headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+        
+        // Define benefits to compare
+        const benefits = [
+            { key: 'primaryCare', label: 'Primary Care Visit' },
+            { key: 'specialistVisit', label: 'Specialist Visit' },
+            { key: 'urgentCare', label: 'Urgent Care' },
+            { key: 'emergencyRoom', label: 'Emergency Room' },
+            { key: 'inpatient', label: 'Inpatient Stay' },
+            { key: 'outpatient', label: 'Outpatient Visit' },
+            { key: 'basicImaging', label: 'Basic Imaging' },
+            { key: 'advancedImaging', label: 'Advanced Imaging' },
+            { key: 'labWork', label: 'Lab Tests' },
+            { key: 'ambulatoryProcedures', label: 'Ambulatory Procedures' }
+        ];
+        
+        // Add medical benefits rows
+        benefits.forEach(benefit => {
+            const row = document.createElement('tr');
+            const labelCell = document.createElement('td');
+            labelCell.textContent = benefit.label;
+            row.appendChild(labelCell);
             
-            // Medical benefits section
-            const medicalSection = document.createElement('div');
-            medicalSection.className = 'benefits-section';
-            medicalSection.innerHTML = '<h4>Medical Benefits</h4>';
-            
-            const medicalBenefits = [
-                { key: 'primaryCare', label: 'Primary Care Visit' },
-                { key: 'specialistVisit', label: 'Specialist Visit' },
-                { key: 'urgentCare', label: 'Urgent Care' },
-                { key: 'emergencyRoom', label: 'Emergency Room' },
-                { key: 'inpatient', label: 'Inpatient Stay' },
-                { key: 'outpatient', label: 'Outpatient Visit' },
-                { key: 'basicImaging', label: 'Basic Imaging' },
-                { key: 'advancedImaging', label: 'Advanced Imaging' },
-                { key: 'labWork', label: 'Lab Tests' },
-                { key: 'ambulatoryProcedures', label: 'Ambulatory Procedures' }
-            ];
-            
-            medicalBenefits.forEach(benefit => {
-                const benefitItem = document.createElement('div');
-                benefitItem.className = 'benefit-item';
-                
-                const benefitLabel = document.createElement('span');
-                benefitLabel.className = 'benefit-label';
-                benefitLabel.textContent = benefit.label;
-                
-                const benefitValue = document.createElement('span');
-                benefitValue.className = 'benefit-value';
-                
+            this.selectedPlans.forEach(plan => {
+                const cell = document.createElement('td');
                 const planBenefit = plan.benefits[benefit.key];
                 if (planBenefit) {
                     if (planBenefit.type === 'Copay') {
-                        benefitValue.innerHTML = `<span class="benefit-type">$${planBenefit.amount}</span> <span class="benefit-desc">copay</span>`;
+                        cell.innerHTML = `<span class="benefit-type">$${planBenefit.amount}</span> <span class="benefit-desc">copay</span>`;
                     } else if (planBenefit.type === 'Deductible + Coinsurance') {
-                        benefitValue.innerHTML = `<span class="benefit-type">$${planBenefit.amount} + ${planBenefit.percentage}%</span> <span class="benefit-desc">deductible + coinsurance</span>`;
+                        cell.innerHTML = `<span class="benefit-type">$${planBenefit.amount} + ${planBenefit.percentage}%</span> <span class="benefit-desc">deductible + coinsurance</span>`;
                     } else if (planBenefit.type === 'Coinsurance') {
-                        benefitValue.innerHTML = `<span class="benefit-type">${planBenefit.percentage}%</span> <span class="benefit-desc">coinsurance</span>`;
+                        cell.innerHTML = `<span class="benefit-type">${planBenefit.percentage}%</span> <span class="benefit-desc">coinsurance</span>`;
                     } else if (planBenefit.type === 'Deductible + Copay') {
-                        benefitValue.innerHTML = `<span class="benefit-type">$${planBenefit.amount}</span> <span class="benefit-desc">deductible + copay</span>`;
+                        cell.innerHTML = `<span class="benefit-type">$${planBenefit.amount}</span> <span class="benefit-desc">deductible + copay</span>`;
                     } else if (planBenefit.type === 'Deductible') {
-                        benefitValue.innerHTML = `<span class="benefit-type">Deductible</span> <span class="benefit-desc">applies</span>`;
+                        cell.innerHTML = `<span class="benefit-type">Deductible</span> <span class="benefit-desc">applies</span>`;
                     } else {
-                        benefitValue.innerHTML = `<span class="benefit-type">${planBenefit.type}</span>`;
+                        cell.innerHTML = `<span class="benefit-type">${planBenefit.type}</span>`;
                     }
                 } else {
-                    benefitValue.innerHTML = `<span class="benefit-type not-covered">Not Covered</span>`;
+                    cell.innerHTML = `<span class="benefit-type not-covered">Not Covered</span>`;
                 }
-                
-                benefitItem.appendChild(benefitLabel);
-                benefitItem.appendChild(benefitValue);
-                medicalSection.appendChild(benefitItem);
+                row.appendChild(cell);
             });
             
-            planCard.appendChild(medicalSection);
+            table.appendChild(row);
+        });
+        
+        // Add prescription benefits section
+        const prescriptionHeader = document.createElement('tr');
+        prescriptionHeader.className = 'prescription-header';
+        prescriptionHeader.innerHTML = '<td colspan="' + (this.selectedPlans.length + 1) + '"><strong>Prescription Benefits</strong></td>';
+        table.appendChild(prescriptionHeader);
+        
+        const prescriptionTiers = [
+            { key: 'tier1', label: 'Tier 1 (Generic)' },
+            { key: 'tier2', label: 'Tier 2 (Preferred Generic)' },
+            { key: 'tier3', label: 'Tier 3 (Preferred Brand)' },
+            { key: 'tier4', label: 'Tier 4 (Non-Preferred Brand)' },
+            { key: 'tier5', label: 'Tier 5 (Specialty)' },
+            { key: 'tier6', label: 'Tier 6 (Specialty High Cost)' }
+        ];
+        
+        prescriptionTiers.forEach(tier => {
+            const row = document.createElement('tr');
+            const labelCell = document.createElement('td');
+            labelCell.textContent = tier.label;
+            row.appendChild(labelCell);
             
-            // Prescription benefits section
-            const prescriptionSection = document.createElement('div');
-            prescriptionSection.className = 'benefits-section';
-            prescriptionSection.innerHTML = '<h4>Prescription Benefits</h4>';
-            
-            const prescriptionTiers = [
-                { key: 'tier1', label: 'Tier 1 (Generic)' },
-                { key: 'tier2', label: 'Tier 2 (Preferred Generic)' },
-                { key: 'tier3', label: 'Tier 3 (Preferred Brand)' },
-                { key: 'tier4', label: 'Tier 4 (Non-Preferred Brand)' },
-                { key: 'tier5', label: 'Tier 5 (Specialty)' },
-                { key: 'tier6', label: 'Tier 6 (Specialty High Cost)' }
-            ];
-            
-            prescriptionTiers.forEach(tier => {
-                const benefitItem = document.createElement('div');
-                benefitItem.className = 'benefit-item';
-                
-                const benefitLabel = document.createElement('span');
-                benefitLabel.className = 'benefit-label';
-                benefitLabel.textContent = tier.label;
-                
-                const benefitValue = document.createElement('span');
-                benefitValue.className = 'benefit-value';
-                
+            this.selectedPlans.forEach(plan => {
+                const cell = document.createElement('td');
                 const tierBenefit = plan.prescriptionBenefits[tier.key];
                 if (tierBenefit) {
                     if (tierBenefit.type === 'Copay') {
-                        benefitValue.innerHTML = `<span class="benefit-type">$${tierBenefit.amount}</span> <span class="benefit-desc">copay</span>`;
+                        cell.innerHTML = `<span class="benefit-type">$${tierBenefit.amount}</span> <span class="benefit-desc">copay</span>`;
                     } else if (tierBenefit.type === 'Deductible + Coinsurance') {
-                        benefitValue.innerHTML = `<span class="benefit-type">$${tierBenefit.amount} + ${tierBenefit.percentage}%</span> <span class="benefit-desc">deductible + coinsurance</span>`;
+                        cell.innerHTML = `<span class="benefit-type">$${tierBenefit.amount} + ${tierBenefit.percentage}%</span> <span class="benefit-desc">deductible + coinsurance</span>`;
                     } else if (tierBenefit.type === 'Coinsurance') {
-                        benefitValue.innerHTML = `<span class="benefit-type">${tierBenefit.percentage}%</span> <span class="benefit-desc">coinsurance</span>`;
+                        cell.innerHTML = `<span class="benefit-type">${tierBenefit.percentage}%</span> <span class="benefit-desc">coinsurance</span>`;
                     } else if (tierBenefit.type === 'Deductible + Copay') {
-                        benefitValue.innerHTML = `<span class="benefit-type">$${tierBenefit.amount}</span> <span class="benefit-desc">deductible + copay</span>`;
+                        cell.innerHTML = `<span class="benefit-type">$${tierBenefit.amount}</span> <span class="benefit-desc">deductible + copay</span>`;
                     } else if (tierBenefit.type === 'Deductible') {
-                        benefitValue.innerHTML = `<span class="benefit-type">Deductible</span> <span class="benefit-desc">applies</span>`;
+                        cell.innerHTML = `<span class="benefit-type">Deductible</span> <span class="benefit-desc">applies</span>`;
                     } else {
-                        benefitValue.innerHTML = `<span class="benefit-type">${tierBenefit.type}</span>`;
+                        cell.innerHTML = `<span class="benefit-type">${tierBenefit.type}</span>`;
                     }
                 } else {
-                    benefitValue.innerHTML = `<span class="benefit-type not-covered">Not Covered</span>`;
+                    cell.innerHTML = `<span class="benefit-type not-covered">Not Covered</span>`;
                 }
-                
-                benefitItem.appendChild(benefitLabel);
-                benefitItem.appendChild(benefitValue);
-                prescriptionSection.appendChild(benefitItem);
+                row.appendChild(cell);
             });
             
-            planCard.appendChild(prescriptionSection);
-            container.appendChild(planCard);
+            table.appendChild(row);
         });
+        
+        container.appendChild(table);
     }
     
     updateSummaryCards() {
