@@ -1,3 +1,4 @@
+// Health Plan Comparison Widget - Simplified Version
 class SyncBenefitComparison {
     constructor() {
         this.selectedPlans = [];
@@ -55,12 +56,15 @@ class SyncBenefitComparison {
         // Load GitHub config from localStorage or environment
         this.loadGitHubConfig();
         
-        this.init();
+        // Initialize asynchronously
+        this.init().catch(error => {
+            console.error('Error initializing widget:', error);
+        });
     }
 
-    init() {
+    async init() {
         this.bindEvents();
-        this.loadExamplePlans();
+        await this.loadExamplePlans();
         this.loadCustomPlans();
     }
 
@@ -95,213 +99,91 @@ class SyncBenefitComparison {
         document.getElementById('recalculateBtn').addEventListener('click', () => this.performComparison());
     }
     
-    loadExamplePlans() {
-        console.log('Loading example plans...');
+    async loadExamplePlans() {
+        console.log('Loading plans from all-plans.json...');
         
-        const examplePlans = [
-            {
-                id: 'example_1',
-                name: 'BlueOptions Platinum',
-                type: 'PPO',
-                annualDeductible: 0,
-                annualOOPMax: 2275,
-                familyDeductible: 0,
-                familyOOPMax: 4550,
-                planYear: 2025,
-                carrier: 'Florida Blue',
-                network: 'BlueOptions',
-                metalLevel: 'Platinum',
-                hsa: false,
-                productType: 'U65 On Exchange',
-                benefits: {
-                    primaryCare: { type: 'Copay', amount: 10, percentage: 0 },
-                    specialistVisit: { type: 'Copay', amount: 20, percentage: 0 },
-                    urgentCare: { type: 'Copay', amount: 20, percentage: 0 },
-                    emergencyRoom: { type: 'Copay', amount: 225, percentage: 0 },
-                    ambulance: { type: 'Copay', amount: 0, percentage: 0 },
-                    inpatient: { type: 'Copay', amount: 200, percentage: 0 },
-                    outpatient: { type: 'Copay', amount: 300, percentage: 0 },
-                    basicImaging: { type: 'Copay', amount: 75, percentage: 0 },
-                    advancedImaging: { type: 'Copay', amount: 150, percentage: 0 },
-                    labWork: { type: 'Copay', amount: 0, percentage: 0 },
-                    ambulatoryProcedures: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                prescriptionBenefits: {
-                    tier1: { type: 'Copay', amount: 4, percentage: 0 },
-                    tier2: { type: 'Copay', amount: 10, percentage: 0 },
-                    tier3: { type: 'Copay', amount: 20, percentage: 0 },
-                    tier4: { type: 'Copay', amount: 40, percentage: 0 },
-                    tier5: { type: 'Copay', amount: 0, percentage: 0 },
-                    tier6: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                premium: 0,
-                isCustom: false,
-                isExample: true
-            },
-            {
-                id: 'example_2',
-                name: 'BlueSelect Platinum',
-                type: 'PPO',
-                annualDeductible: 0,
-                annualOOPMax: 2275,
-                familyDeductible: 0,
-                familyOOPMax: 4550,
-                planYear: 2025,
-                carrier: 'Florida Blue',
-                network: 'BlueSelect',
-                metalLevel: 'Platinum',
-                hsa: false,
-                productType: 'U65 On Exchange',
-                benefits: {
-                    primaryCare: { type: 'Copay', amount: 10, percentage: 0 },
-                    specialistVisit: { type: 'Copay', amount: 20, percentage: 0 },
-                    urgentCare: { type: 'Copay', amount: 20, percentage: 0 },
-                    emergencyRoom: { type: 'Copay', amount: 225, percentage: 0 },
-                    ambulance: { type: 'Copay', amount: 0, percentage: 0 },
-                    inpatient: { type: 'Copay', amount: 200, percentage: 0 },
-                    outpatient: { type: 'Copay', amount: 300, percentage: 0 },
-                    basicImaging: { type: 'Copay', amount: 75, percentage: 0 },
-                    advancedImaging: { type: 'Copay', amount: 150, percentage: 0 },
-                    labWork: { type: 'Copay', amount: 0, percentage: 0 },
-                    ambulatoryProcedures: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                prescriptionBenefits: {
-                    tier1: { type: 'Copay', amount: 4, percentage: 0 },
-                    tier2: { type: 'Copay', amount: 10, percentage: 0 },
-                    tier3: { type: 'Copay', amount: 20, percentage: 0 },
-                    tier4: { type: 'Copay', amount: 40, percentage: 0 },
-                    tier5: { type: 'Copay', amount: 0, percentage: 0 },
-                    tier6: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                premium: 0,
-                isCustom: false,
-                isExample: true
-            },
-            {
-                id: 'example_3',
-                name: 'BlueCare Platinum',
-                type: 'HMO',
-                annualDeductible: 0,
-                annualOOPMax: 2275,
-                familyDeductible: 0,
-                familyOOPMax: 4550,
-                planYear: 2025,
-                carrier: 'Florida Blue',
-                network: 'BlueCare',
-                metalLevel: 'Platinum',
-                hsa: false,
-                productType: 'U65 On Exchange',
-                benefits: {
-                    primaryCare: { type: 'Copay', amount: 10, percentage: 0 },
-                    specialistVisit: { type: 'Copay', amount: 20, percentage: 0 },
-                    urgentCare: { type: 'Copay', amount: 20, percentage: 0 },
-                    emergencyRoom: { type: 'Copay', amount: 225, percentage: 0 },
-                    ambulance: { type: 'Copay', amount: 0, percentage: 0 },
-                    inpatient: { type: 'Copay', amount: 200, percentage: 0 },
-                    outpatient: { type: 'Copay', amount: 300, percentage: 0 },
-                    basicImaging: { type: 'Copay', amount: 75, percentage: 0 },
-                    advancedImaging: { type: 'Copay', amount: 150, percentage: 0 },
-                    labWork: { type: 'Copay', amount: 0, percentage: 0 },
-                    ambulatoryProcedures: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                prescriptionBenefits: {
-                    tier1: { type: 'Copay', amount: 4, percentage: 0 },
-                    tier2: { type: 'Copay', amount: 10, percentage: 0 },
-                    tier3: { type: 'Copay', amount: 20, percentage: 0 },
-                    tier4: { type: 'Copay', amount: 40, percentage: 0 },
-                    tier5: { type: 'Copay', amount: 0, percentage: 0 },
-                    tier6: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                premium: 0,
-                isCustom: false,
-                isExample: true
-            },
-            {
-                id: 'example_4',
-                name: 'BlueOptions Gold',
-                type: 'PPO',
-                annualDeductible: 1000,
-                annualOOPMax: 4000,
-                familyDeductible: 2000,
-                familyOOPMax: 8000,
-                planYear: 2025,
-                carrier: 'Florida Blue',
-                network: 'BlueOptions',
-                metalLevel: 'Gold',
-                hsa: false,
-                productType: 'U65 On Exchange',
-                benefits: {
-                    primaryCare: { type: 'Copay', amount: 15, percentage: 0 },
-                    specialistVisit: { type: 'Copay', amount: 35, percentage: 0 },
-                    urgentCare: { type: 'Copay', amount: 35, percentage: 0 },
-                    emergencyRoom: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    ambulance: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    inpatient: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    outpatient: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    basicImaging: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    advancedImaging: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    labWork: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 },
-                    ambulatoryProcedures: { type: 'Deductible + Coinsurance', amount: 1000, percentage: 10 }
-                },
-                prescriptionBenefits: {
-                    tier1: { type: 'Copay', amount: 4, percentage: 0 },
-                    tier2: { type: 'Copay', amount: 15, percentage: 0 },
-                    tier3: { type: 'Copay', amount: 23, percentage: 0 },
-                    tier4: { type: 'Copay', amount: 45, percentage: 0 },
-                    tier5: { type: 'Copay', amount: 0, percentage: 0 },
-                    tier6: { type: 'Copay', amount: 0, percentage: 0 }
-                },
-                premium: 0,
-                isCustom: false,
-                isExample: true
-            },
-            {
-                id: 'example_5',
-                name: 'BlueOptions Silver',
-                type: 'PPO',
-                annualDeductible: 3000,
-                annualOOPMax: 8000,
-                familyDeductible: 6000,
-                familyOOPMax: 16000,
-                planYear: 2025,
-                carrier: 'Florida Blue',
-                network: 'BlueOptions',
-                metalLevel: 'Silver',
-                hsa: false,
-                productType: 'U65 On Exchange',
-                benefits: {
-                    primaryCare: { type: 'Copay', amount: 25, percentage: 0 },
-                    specialistVisit: { type: 'Copay', amount: 50, percentage: 0 },
-                    urgentCare: { type: 'Copay', amount: 50, percentage: 0 },
-                    emergencyRoom: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    ambulance: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    inpatient: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    outpatient: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    basicImaging: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    advancedImaging: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    labWork: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 },
-                    ambulatoryProcedures: { type: 'Deductible + Coinsurance', amount: 3000, percentage: 30 }
-                },
-                prescriptionBenefits: {
-                    tier1: { type: 'Copay', amount: 10, percentage: 0 },
-                    tier2: { type: 'Copay', amount: 25, percentage: 0 },
-                    tier3: { type: 'Copay', amount: 50, percentage: 0 },
-                    tier4: { type: 'Copay', amount: 100, percentage: 0 },
-                    tier5: { type: 'Copay', amount: 200, percentage: 0 },
-                    tier6: { type: 'Copay', amount: 300, percentage: 0 }
-                },
-                premium: 0,
-                isCustom: false,
-                isExample: true
+        try {
+            // Try to load from the plans directory
+            const response = await fetch('../plans/all-plans.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        ];
-        
-        examplePlans.forEach(plan => {
-            this.storedPlans.push(plan);
-            this.addPlanToGrid(plan);
-        });
-        
-        console.log('Loaded example plans:', this.storedPlans.length);
+            
+            const plans = await response.json();
+            console.log('Loaded plans from JSON file:', plans.length);
+            
+            // Add all plans to the stored plans and grid
+            plans.forEach(plan => {
+                // Ensure the plan has the required structure
+                if (!plan.id) {
+                    plan.id = plan.name || `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                }
+                
+                // Set default values for missing fields
+                plan.isCustom = false;
+                plan.isExample = false;
+                plan.premium = plan.premium || 0;
+                
+                this.storedPlans.push(plan);
+                this.addPlanToGrid(plan);
+            });
+            
+            console.log('Successfully loaded', this.storedPlans.length, 'plans');
+            
+        } catch (error) {
+            console.error('Error loading plans from JSON file:', error);
+            console.log('Falling back to hardcoded example plans...');
+            
+            // Fallback to hardcoded example plans if JSON loading fails
+            const examplePlans = [
+                {
+                    id: 'example_1',
+                    name: 'BlueOptions Platinum',
+                    type: 'PPO',
+                    annualDeductible: 0,
+                    annualOOPMax: 2275,
+                    familyDeductible: 0,
+                    familyOOPMax: 4550,
+                    planYear: 2025,
+                    carrier: 'Florida Blue',
+                    network: 'BlueOptions',
+                    metalLevel: 'Platinum',
+                    hsa: false,
+                    productType: 'U65 On Exchange',
+                    benefits: {
+                        primaryCare: { type: 'Copay', amount: 10, percentage: 0 },
+                        specialistVisit: { type: 'Copay', amount: 20, percentage: 0 },
+                        urgentCare: { type: 'Copay', amount: 20, percentage: 0 },
+                        emergencyRoom: { type: 'Copay', amount: 225, percentage: 0 },
+                        ambulance: { type: 'Copay', amount: 0, percentage: 0 },
+                        inpatient: { type: 'Copay', amount: 200, percentage: 0 },
+                        outpatient: { type: 'Copay', amount: 300, percentage: 0 },
+                        basicImaging: { type: 'Copay', amount: 75, percentage: 0 },
+                        advancedImaging: { type: 'Copay', amount: 150, percentage: 0 },
+                        labWork: { type: 'Copay', amount: 0, percentage: 0 },
+                        ambulatoryProcedures: { type: 'Copay', amount: 0, percentage: 0 }
+                    },
+                    prescriptionBenefits: {
+                        tier1: { type: 'Copay', amount: 4, percentage: 0 },
+                        tier2: { type: 'Copay', amount: 10, percentage: 0 },
+                        tier3: { type: 'Copay', amount: 20, percentage: 0 },
+                        tier4: { type: 'Copay', amount: 40, percentage: 0 },
+                        tier5: { type: 'Copay', amount: 0, percentage: 0 },
+                        tier6: { type: 'Copay', amount: 0, percentage: 0 }
+                    },
+                    premium: 0,
+                    isCustom: false,
+                    isExample: true
+                }
+            ];
+            
+            examplePlans.forEach(plan => {
+                this.storedPlans.push(plan);
+                this.addPlanToGrid(plan);
+            });
+            
+            console.log('Loaded fallback example plans:', this.storedPlans.length);
+        }
     }
     
     addPlanToGrid(plan) {
@@ -328,9 +210,11 @@ class SyncBenefitComparison {
             <div class="plan-details">
                 <div class="plan-type">${plan.type} - ${plan.metalLevel}</div>
                 <div class="plan-carrier">${plan.carrier}</div>
+                <div class="plan-network">${plan.network}</div>
                 <div class="plan-deductible">Deductible: $${plan.annualDeductible.toLocaleString()}</div>
                 <div class="plan-oop">OOP Max: $${plan.annualOOPMax.toLocaleString()}</div>
                 ${plan.hsa ? '<div class="plan-hsa">HSA Eligible</div>' : ''}
+                ${plan.productType ? `<div class="plan-product-type">${plan.productType}</div>` : ''}
             </div>
         `;
         
@@ -747,14 +631,14 @@ class SyncBenefitComparison {
             this.performComparison();
         }
     
-    loadSamplePlans() {
+    async loadSamplePlans() {
         // Clear existing plans first
         this.storedPlans = [];
         const planGrid = document.getElementById('planGrid');
         planGrid.innerHTML = '';
         
-        // Load example plans
-        this.loadExamplePlans();
+        // Load plans from JSON file
+        await this.loadExamplePlans();
         
         alert('Sample plans loaded successfully!');
     }
