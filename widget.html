@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Benefit Comparison</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container">
+        <!-- Header -->
+        <div class="widget-header">
+            <div class="header-content">
+                <div class="header-logo">
+                    <div class="sync-logo">
+                        <div class="sync-icon"></div>
+                    </div>
+                </div>
+                <div class="header-text">
+                    <h1>Sync Benefit Comparison</h1>
+                    <p>Sync your options, compare your benefits, choose with confidence.</p>
+                </div>
+                <div class="header-actions">
+                    <button id="resetBtn" class="btn btn-outline btn-sm">Reset All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="widget-content">
+            <!-- Plan Search Section -->
+            <div class="section plan-search-section">
+                <h2>Search & Filter Plans</h2>
+                <p class="section-description">Search and filter through available health insurance plans to find the ones you want to compare.</p>
+                <div class="search-container">
+                    <input type="text" id="planSearchInput" placeholder="Search plans by name, carrier, network, or metal level..." class="search-input">
+                    <button id="clearSearchBtn" class="btn btn-outline btn-sm">Clear</button>
+                </div>
+                <div class="filter-container">
+                    <select id="metalLevelFilter" class="filter-select">
+                        <option value="">All Metal Levels</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Bronze">Bronze</option>
+                    </select>
+                    <select id="networkFilter" class="filter-select">
+                        <option value="">All Networks</option>
+                        <option value="BlueOptions">BlueOptions</option>
+                        <option value="BlueSelect">BlueSelect</option>
+                        <option value="BlueCare">BlueCare</option>
+                        <option value="MyBlue">MyBlue</option>
+                    </select>
+                    <select id="carrierFilter" class="filter-select">
+                        <option value="">All Carriers</option>
+                        <option value="Florida Blue">Florida Blue</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Plan Selection Section -->
+            <div class="section plan-selection">
+                <h2>Select Plans to Compare</h2>
+                <p class="section-description">Choose up to 6 health insurance plans to compare. Click on a plan to select it for comparison.</p>
+                <div class="plan-grid" id="planGrid">
+                    <!-- Plans will be dynamically loaded here -->
+                </div>
+                
+                <div class="add-plan-section">
+                    <button id="addPlanBtn" class="btn btn-secondary">
+                        <span class="btn-icon">+</span>
+                        Add Custom Plan
+                    </button>
+                    <button id="loadSamplePlansBtn" class="btn btn-primary load-library-btn">
+                        <span class="btn-icon">📚</span>
+                        Load Plan Library
+                    </button>
+                </div>
+                
+                <div class="selected-plans-summary" id="selectedPlansSummary" style="display: none;">
+                    <h4>Selected Plans (<span id="selectedCount">0</span>)</h4>
+                    <div id="selectedPlansList"></div>
+                </div>
+            </div>
+
+            <!-- Enter Premiums Section -->
+            <div class="section enter-premiums" id="enterPremiumsSection" style="display: none;">
+                <h2>Enter Plan Premiums</h2>
+                <p class="section-description">Enter the monthly premium for each selected plan. The annual premium will be calculated automatically. These premiums will be factored into the total cost comparison.</p>
+                <div class="scenario-container">
+                    <div class="premiums-grid" id="premiumsGrid">
+                        <!-- Premium inputs will be added here -->
+                    </div>
+                    <div class="premium-actions">
+                        <button id="savePremiumsBtn" class="btn btn-primary">
+                            <span class="btn-icon">💾</span>
+                            Save Premiums & Calculate
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Bills Section -->
+            <div class="section medical-bills">
+                <h2>Example Medical Bills</h2>
+                <p class="section-description">Add example medical bills to see what your out-of-pocket costs would be under each plan.</p>
+                <div class="scenario-container">
+                    <div class="custom-scenario">
+                        <div class="add-bill-section">
+                            <div class="form-group">
+                                <label for="billDescription">Bill Description</label>
+                                <input type="text" id="billDescription" placeholder="e.g., Hospital Stay, Surgery, etc.">
+                            </div>
+                            <div class="form-group">
+                                <label for="billAmount">Bill Amount ($)</label>
+                                <input type="number" id="billAmount" min="0" step="100" placeholder="10000">
+                            </div>
+                            <div class="form-group">
+                                <label for="billBenefitType">Benefit Type</label>
+                                <select id="billBenefitType" class="bill-benefit-type">
+                                    <option value="Emergency Room">Emergency Room</option>
+                                    <option value="Inpatient Visits">Inpatient Visits</option>
+                                    <option value="Outpatient Visits">Outpatient Visits</option>
+                                    <option value="Surgery/Procedures">Ambulatory Procedures</option>
+                                    <option value="Advanced Imaging">Advanced Imaging</option>
+                                    <option value="Basic Imaging">Basic Imaging</option>
+                                    <option value="Lab Tests">Lab Tests</option>
+                                </select>
+                            </div>
+                            <button id="addBillBtn" class="btn btn-secondary">
+                                <span class="btn-icon">+</span>
+                                Add Bill
+                            </button>
+                        </div>
+                        <div id="billsList" class="bills-list">
+                            <!-- Bills will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Usage Scenarios Section -->
+            <div class="section usage-scenarios">
+                <h2>Expected Usage Scenario</h2>
+                <p class="section-description">Choose a preset scenario or enter your expected healthcare usage to calculate which plan offers the best value for your needs.</p>
+                
+                <!-- Quick Scenario Buttons -->
+                <div class="scenario-buttons">
+                    <button id="lightUsageBtn" class="btn btn-secondary scenario-btn">
+                        <span class="btn-icon">🌱</span>
+                        Light Usage
+                    </button>
+                    <button id="mediumUsageBtn" class="btn btn-secondary scenario-btn">
+                        <span class="btn-icon">⚖️</span>
+                        Medium Usage
+                    </button>
+                    <button id="heavyUsageBtn" class="btn btn-secondary scenario-btn">
+                        <span class="btn-icon">🔥</span>
+                        Heavy Usage
+                    </button>
+                </div>
+                
+                <div class="scenario-container">
+                    <div class="custom-scenario">
+                        <h3>Custom Usage</h3>
+                        <div class="usage-inputs">
+                            <div class="input-group">
+                                <label for="primaryVisits">Primary Care Visits</label>
+                                <input type="number" id="primaryVisits" min="0" value="2" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="specialistVisits">Specialist Visits</label>
+                                <input type="number" id="specialistVisits" min="0" value="1" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="urgentCareVisits">Urgent Care Visits</label>
+                                <input type="number" id="urgentCareVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="virtualVisits">Virtual Visits</label>
+                                <input type="number" id="virtualVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="erVisits">Emergency Room Visits</label>
+                                <input type="number" id="erVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="labTests">Lab Tests</label>
+                                <input type="number" id="labTests" min="0" value="3" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="basicImaging">Basic Imaging (X-Ray, Ultrasound)</label>
+                                <input type="number" id="basicImaging" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="advancedImaging">Advanced Imaging (CT, MRI)</label>
+                                <input type="number" id="advancedImaging" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="outpatientVisits">Outpatient Visits</label>
+                                <input type="number" id="outpatientVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="inpatientVisits">Inpatient Visits</label>
+                                <input type="number" id="inpatientVisits" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="surgeryVisits">Surgery/Procedure Visits</label>
+                                <input type="number" id="surgeryVisits" min="0" value="0" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prescription Drug Usage Section -->
+            <div class="prescription-drug-section">
+                <div class="section-header">
+                    <h3>Prescription Drug Usage</h3>
+                    <p class="section-description">Add your prescription drugs below. Specify the drug type, quantity, tier, and frequency for each medication.</p>
+                </div>
+                
+                <div class="drug-input-container">
+                    <div class="drug-input-row">
+                        <div class="input-group">
+                            <label for="drugType">Drug Type</label>
+                            <select id="drugType">
+                                <option value="">Select Drug Type</option>
+                                <option value="Generic">Generic</option>
+                                <option value="Preferred Brand Name">Preferred Brand Name</option>
+                                <option value="Non-Preferred Brand Name">Non-Preferred Brand Name</option>
+                                <option value="Specialty">Specialty</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="drugQuantity">Quantity</label>
+                            <input type="number" id="drugQuantity" min="1" value="1" placeholder="1">
+                        </div>
+                        <div class="input-group">
+                            <label for="drugTier">Tier</label>
+                            <select id="drugTier">
+                                <option value="">Select Tier</option>
+                                <option value="tier1">Tier 1</option>
+                                <option value="tier2">Tier 2</option>
+                                <option value="tier3">Tier 3</option>
+                                <option value="tier4">Tier 4</option>
+                                <option value="tier5">Tier 5</option>
+                                <option value="tier6">Tier 6</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="drugFrequency">Frequency</label>
+                            <select id="drugFrequency">
+                                <option value="">Select Frequency</option>
+                                <option value="1monthly">1 Monthly</option>
+                                <option value="monthly">Monthly - indefinitely</option>
+                                <option value="3months">3 Months</option>
+                                <option value="6months">6 Months</option>
+                                <option value="9months">9 Months</option>
+                                <option value="12months">12 Months</option>
+                                <option value="onetime">One-time purchase</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <button id="addDrugBtn" class="btn btn-secondary">
+                                <span class="btn-icon">+</span>
+                                Add Drug
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="drugs-table-container">
+                    <table class="drugs-table" id="drugsTable">
+                        <thead>
+                            <tr>
+                                <th>Drug Type</th>
+                                <th>Tier</th>
+                                <th>Quantity</th>
+                                <th>Frequency</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drugsTableBody">
+                            <!-- Added drugs will appear here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Plan Benefits Viewer -->
+            <div class="section plan-benefits-viewer" id="planBenefitsViewer" style="display: none;">
+                <h2>Selected Plan Benefits</h2>
+                <p class="section-description">Compare the benefits and coverage details of your selected plans side by side.</p>
+                <div class="benefits-comparison-container" id="benefitsComparisonContainer">
+                    <!-- Plan benefits will be populated here -->
+                </div>
+            </div>
+
+            <!-- Plan Comparison Results -->
+            <div class="section comparison-results" id="comparisonResults" style="display: none;">
+                <h2>Plan Comparison Results</h2>
+                <div class="results-container">
+                    <div class="results-summary">
+                        <div class="summary-cards">
+                            <div class="summary-card" id="lowestOopCard">
+                                <h4>Lowest Out-of-Pocket Costs</h4>
+                                <div class="card-content">
+                                    <div class="plan-name" id="lowestOopPlan">-</div>
+                                    <div class="plan-cost" id="lowestOopCost">-</div>
+                                </div>
+                            </div>
+                            <div class="summary-card" id="bestValueCard">
+                                <h4>Best Options</h4>
+                                <div class="card-content">
+                                    <div class="plan-name" id="bestValuePlan">-</div>
+                                    <div class="plan-cost" id="bestValueCost">-</div>
+                                </div>
+                            </div>
+                            <div class="summary-card" id="highestOopCard">
+                                <h4>Highest Out-of-Pocket Costs</h4>
+                                <div class="card-content">
+                                    <div class="plan-name" id="highestOopPlan">-</div>
+                                    <div class="plan-cost" id="highestOopCost">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detailed-comparison">
+                        <div class="comparison-categories">
+                            <div class="category-section">
+                                <h3>Basic Medical</h3>
+                                <p class="category-description">Includes lab tests, primary care visits, specialist visits, urgent care, and virtual visits.</p>
+                            </div>
+                            <div class="category-section">
+                                <h3>Major Medical</h3>
+                                <p class="category-description">Covers advanced imaging, emergency room visits, physician charges, outpatient/inpatient services, and ambulatory procedures.</p>
+                            </div>
+                            <div class="category-section">
+                                <h3>Drug Costs</h3>
+                                <p class="category-description">Prescription drug costs across all tiers including generic, preferred brand, non-preferred brand, and specialty drugs.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="comparison-table-container">
+                            <table class="comparison-table" id="comparisonTable">
+                                <thead>
+                                    <tr>
+                                        <th>Plan Name</th>
+                                        <th>Deductible</th>
+                                        <th>OOP Max</th>
+                                        <th>Annual Premium</th>
+                                        <th>Basic Medical</th>
+                                        <th>Major Medical</th>
+                                        <th>Drug Costs</th>
+                                        <th>Medical Bills</th>
+                                        <th>Out-of-Pocket Costs</th>
+                                        <th>Total Annual Cost</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparisonTableBody">
+                                    <!-- Comparison data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Medical Bills Breakdown -->
+                        <div class="medical-bills-breakdown" id="medicalBillsBreakdown" style="display: none;">
+                            <h3>Medical Bills Breakdown</h3>
+                            <div class="bills-breakdown-container" id="billsBreakdownContainer">
+                                <!-- Medical bills breakdown will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="export-section">
+                        <button id="recalculateBtn" class="btn btn-outline">
+                            <span class="btn-icon">🔄</span>
+                            Recalculate
+                        </button>
+                        <button id="exportPdfBtn" class="btn btn-primary">
+                            <span class="btn-icon">📄</span>
+                            Export to PDF
+                        </button>
+                        <button id="exportExcelBtn" class="btn btn-secondary">
+                            <span class="btn-icon">📊</span>
+                            Export to Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cost Reference Section (Collapsible) -->
+            <div class="section cost-reference-collapsible">
+                <div class="cost-reference-header" onclick="toggleCostReference()">
+                    <h2>Service Cost Reference</h2>
+                    <span class="cost-reference-toggle" id="costReferenceToggle">▼</span>
+                </div>
+                <div class="cost-reference-content" id="costReferenceContent" style="display: none;">
+                    <p class="section-description">The following flat amounts are used for all calculations. These represent typical costs for each service type.</p>
+                    <div class="cost-reference-grid">
+                        <div class="cost-category">
+                            <h3>Primary & Specialist Care</h3>
+                            <ul>
+                                <li>Family Physician Office Visit: <strong>$120</strong></li>
+                                <li>Family Physician Virtual Visit: <strong>$150</strong></li>
+                                <li>Specialist Visit: <strong>$250</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Urgent & Emergency Care</h3>
+                            <ul>
+                                <li>Urgent Care Visit: <strong>$450</strong></li>
+                                <li>Emergency Room Visit: <strong>$3,000</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Surgical & Hospital Services</h3>
+                            <ul>
+                                <li>Ambulatory Surgery Center (ASC): <strong>$4,500</strong></li>
+                                <li>Inpatient Hospital Stay: <strong>$2,000 per day</strong></li>
+                                <li>Outpatient Hospital Visit: <strong>$3,000</strong></li>
+                            </ul>
+                            <div class="cost-note">
+                                <small><strong>Note:</strong> Heavy usage scenario assumes 3-day inpatient stay (3 days × $2,000 = $6,000 total)</small>
+                            </div>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Diagnostic & Imaging Services</h3>
+                            <ul>
+                                <li>Independent Clinical Lab: <strong>$100</strong></li>
+                                <li>Diagnostic Services (EKG, labs): <strong>$500</strong></li>
+                                <li>Imaging Services (MRI, CT): <strong>$1,500</strong></li>
+                            </ul>
+                        </div>
+                        <div class="cost-category">
+                            <h3>Prescription Medications (Self-Pay)</h3>
+                            <ul>
+                                <li>Prescription Tier 1: <strong>$15</strong></li>
+                                <li>Prescription Tier 2: <strong>$50</strong></li>
+                                <li>Prescription Tier 3: <strong>$100</strong></li>
+                                <li>Prescription Tier 4: <strong>$200</strong></li>
+                                <li>Prescription Tier 5: <strong>$400</strong></li>
+                                <li>Prescription Tier 6: <strong>$600</strong></li>
+                                <li>Prescription Tier 7: <strong>$800</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Plan Modal -->
+    <div class="modal" id="customPlanModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Custom Plan</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="customPlanForm">
+                    <div class="form-group">
+                        <label for="planName">Plan Name</label>
+                        <input type="text" id="planName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="planType">Plan Type</label>
+                        <select id="planType">
+                            <option value="HMO">HMO</option>
+                            <option value="PPO">PPO</option>
+                            <option value="EPO">EPO</option>
+                            <option value="POS">POS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="annualDeductible">Annual Deductible</label>
+                        <input type="number" id="annualDeductible" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="annualOOPMax">Annual Out-of-Pocket Maximum</label>
+                        <input type="number" id="annualOOPMax" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="prescriptionDeductible">Prescription Deductible (if separate)</label>
+                        <input type="number" id="prescriptionDeductible" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="familyDeductible">Family Deductible</label>
+                        <input type="number" id="familyDeductible" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="familyOOPMax">Family Out of Pocket Max</label>
+                        <input type="number" id="familyOOPMax" min="0" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="planYear">Plan Year</label>
+                        <input type="number" id="planYear" min="2024" max="2030" value="2025">
+                    </div>
+                    
+                    <div class="benefits-section">
+                        <h4>Benefits</h4>
+                        <div class="benefits-grid">
+                            <div class="benefit-item">
+                                <label>Primary Care Visit</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Specialist Visit</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Urgent Care</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Virtual Visits</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Emergency Room</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Lab Tests</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Basic Imaging (X-Ray, Ultrasound)</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Advanced Imaging (CT, MRI)</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Outpatient Visits</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Inpatient Visits</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="benefit-item">
+                                <label>Ambulatory Procedures</label>
+                                <select class="benefit-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="benefit-amount" placeholder="Amount" min="0">
+                                <input type="number" class="benefit-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="prescription-section">
+                        <h4>Prescription Drug Benefits</h4>
+                        <div class="prescription-tiers">
+                            <div class="tier-item">
+                                <label>Tier 1</label>
+                                <select class="tier-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="tier-amount" placeholder="Amount" min="0">
+                                <input type="number" class="tier-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="tier-item">
+                                <label>Tier 2</label>
+                                <select class="tier-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="tier-amount" placeholder="Amount" min="0">
+                                <input type="number" class="tier-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="tier-item">
+                                <label>Tier 3</label>
+                                <select class="tier-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="tier-amount" placeholder="Amount" min="0">
+                                <input type="number" class="tier-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="tier-item">
+                                <label>Tier 4 - Preferred Brand Name</label>
+                                <select class="tier-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="tier-amount" placeholder="Amount" min="0">
+                                <input type="number" class="tier-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="tier-item">
+                                <label>Tier 5 - Non-Preferred Brand Name</label>
+                                <select class="tier-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="tier-amount" placeholder="Amount" min="0">
+                                <input type="number" class="tier-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                            <div class="tier-item">
+                                <label>Tier 6 - Specialty Drugs</label>
+                                <select class="tier-type">
+                                    <option value="copay">Copay</option>
+                                    <option value="deductible+coinsurance">Deductible + Coinsurance</option>
+                                    <option value="coinsurance">Coinsurance</option>
+                                    <option value="deductible+copay">Deductible + Copay</option>
+                                </select>
+                                <input type="number" class="tier-amount" placeholder="Amount" min="0">
+                                <input type="number" class="tier-percentage" placeholder="%" min="0" max="100" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelPlan">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePlan">Save Plan</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
